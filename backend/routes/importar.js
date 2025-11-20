@@ -71,19 +71,39 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
         const dni = row[campoDNI] || '';
         const nombres = row[campoNombres] || '';
         
-        // Buscar campos opcionales
+        // Buscar campos opcionales (en el orden que aparecen en el Excel)
         const campoCartera = buscarCampo('CARTERA');
         const campoSubCartera = buscarCampo('SUB CARTERA');
         const campoProducto = buscarCampo('PRODUCTO');
         const campoCapital = buscarCampo('CAPITAL');
         const campoCampana = buscarCampo('CAMPAÑA') || buscarCampo('CAMPANA');
-        const campoDireccion = buscarCampo('DIRECCION COMPLETA') || buscarCampo('DIRECCIÓN COMPLETA');
+        const campoFechaCastigo = buscarCampo('FECHA CASTIGO') || buscarCampo('FECHA_CASTIGO');
+        const campoDireccion = buscarCampo('DIRECCION COMPLETA') || buscarCampo('DIRECCIÓN COMPLETA') || buscarCampo('DIRECCION');
         
         const cartera = campoCartera ? (row[campoCartera] || null) : null;
         const sub_cartera = campoSubCartera ? (row[campoSubCartera] || null) : null;
         const producto = campoProducto ? (row[campoProducto] || null) : null;
         const capital = campoCapital ? (parseFloat(row[campoCapital]) || 0) : 0;
         const campaña = campoCampana ? (row[campoCampana] || null) : null;
+        
+        // Manejar fecha_castigo - puede venir como fecha de Excel o string
+        let fecha_castigo = null;
+        if (campoFechaCastigo && row[campoFechaCastigo]) {
+          const fechaValue = row[campoFechaCastigo];
+          if (fechaValue instanceof Date) {
+            fecha_castigo = fechaValue;
+          } else if (typeof fechaValue === 'string' && fechaValue.trim()) {
+            // Intentar parsear string a fecha
+            const fechaParsed = new Date(fechaValue);
+            if (!isNaN(fechaParsed.getTime())) {
+              fecha_castigo = fechaParsed;
+            }
+          } else if (typeof fechaValue === 'number') {
+            // Fecha serial de Excel
+            fecha_castigo = new Date((fechaValue - 25569) * 86400 * 1000);
+          }
+        }
+        
         const direccion = campoDireccion ? (row[campoDireccion] || null) : null;
 
         if (!dni || !nombres) continue;
@@ -97,7 +117,7 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
           .input('sub_cartera', sql.VarChar, sub_cartera)
           .input('producto', sql.VarChar, producto)
           .input('capital', sql.Float, capital)
-          .input('fecha_castigo', sql.Date, fecha_castigo ? new Date(fecha_castigo) : null)
+          .input('fecha_castigo', sql.Date, fecha_castigo)
           .input('direccion', sql.VarChar, direccion)
           .query(`
             IF NOT EXISTS (SELECT 1 FROM cliente WHERE dni = @dni)

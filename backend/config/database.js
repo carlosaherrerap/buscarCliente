@@ -1,3 +1,38 @@
+// Cargar variables de entorno PRIMERO (antes de cualquier otra cosa)
+const path = require('path');
+const fs = require('fs');
+
+// Intentar cargar desde diferentes ubicaciones posibles
+const envPaths = [
+  path.join(__dirname, '../../.env'),      // Desde backend/config/ -> raíz
+  path.join(__dirname, '../.env'),        // Desde backend/config/ -> backend/
+  path.join(process.cwd(), '.env')       // Desde el directorio actual de trabajo
+];
+
+let envLoaded = false;
+console.log('Buscando archivo .env...');
+console.log('Directorio actual de trabajo:', process.cwd());
+console.log('__dirname:', __dirname);
+
+for (const envPath of envPaths) {
+  console.log('  Probando:', envPath, '- Existe:', fs.existsSync(envPath));
+  if (fs.existsSync(envPath)) {
+    const result = require('dotenv').config({ path: envPath });
+    if (!result.error) {
+      console.log('✓ Archivo .env cargado desde:', envPath);
+      envLoaded = true;
+      break;
+    } else {
+      console.log('  Error al cargar:', result.error.message);
+    }
+  }
+}
+
+if (!envLoaded) {
+  console.warn('⚠️  No se encontró archivo .env. Usando valores por defecto o variables de sistema.');
+  console.warn('  Buscado en:', envPaths);
+}
+
 const sql = require('mssql');
 
 // Configuración de conexión a SQL Server
@@ -22,13 +57,26 @@ const config = {
   }
 };
 
-// Log de configuración (sin mostrar la contraseña)
-console.log('Configuración de conexión:');
+// Log de configuración (sin mostrar la contraseña completa)
+console.log('');
+console.log('='.repeat(60));
+console.log('CONFIGURACIÓN DE CONEXIÓN A SQL SERVER');
+console.log('='.repeat(60));
+console.log('Variables de entorno RAW (del .env):');
+console.log('  process.env.DB_SERVER:', process.env.DB_SERVER || 'NO DEFINIDA');
+console.log('  process.env.DB_USER:', process.env.DB_USER || 'NO DEFINIDA');
+console.log('  process.env.DB_NAME:', process.env.DB_NAME || 'NO DEFINIDA');
+console.log('  process.env.DB_PASSWORD:', process.env.DB_PASSWORD ? '***' + process.env.DB_PASSWORD.slice(-2) + ' (length: ' + process.env.DB_PASSWORD.length + ')' : 'NO DEFINIDA');
+console.log('');
+console.log('Configuración final que se usará:');
 console.log('  Server:', config.server);
 console.log('  Database:', config.database);
 console.log('  User:', config.user);
+console.log('  Password:', config.password ? '***' + config.password.slice(-2) + ' (length: ' + config.password.length + ')' : 'NO DEFINIDA');
 console.log('  Encrypt:', config.options.encrypt);
 console.log('  Trust Certificate:', config.options.trustServerCertificate);
+console.log('='.repeat(60));
+console.log('');
 
 let pool = null;
 
