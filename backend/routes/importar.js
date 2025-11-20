@@ -80,11 +80,12 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
         const campoFechaCastigo = buscarCampo('FECHA CASTIGO') || buscarCampo('FECHA_CASTIGO');
         const campoDireccion = buscarCampo('DIRECCION COMPLETA') || buscarCampo('DIRECCIÓN COMPLETA') || buscarCampo('DIRECCION');
         
-        const cartera = campoCartera ? (row[campoCartera] || null) : null;
-        const sub_cartera = campoSubCartera ? (row[campoSubCartera] || null) : null;
-        const producto = campoProducto ? (row[campoProducto] || null) : null;
-        const capital = campoCapital ? (parseFloat(row[campoCapital]) || 0) : 0;
-        const campaña = campoCampana ? (row[campoCampana] || null) : null;
+        // Convertir valores a string y manejar null/undefined correctamente
+        const cartera = campoCartera && row[campoCartera] ? String(row[campoCartera]).trim() || null : null;
+        const sub_cartera = campoSubCartera && row[campoSubCartera] ? String(row[campoSubCartera]).trim() || null : null;
+        const producto = campoProducto && row[campoProducto] ? String(row[campoProducto]).trim() || null : null;
+        const capital = campoCapital && row[campoCapital] ? (parseFloat(row[campoCapital]) || 0) : 0;
+        const campaña = campoCampana && row[campoCampana] ? String(row[campoCampana]).trim() || null : null;
         
         // Manejar fecha_castigo - puede venir como fecha de Excel o string
         let fecha_castigo = null;
@@ -104,7 +105,7 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
           }
         }
         
-        const direccion = campoDireccion ? (row[campoDireccion] || null) : null;
+        const direccion = campoDireccion && row[campoDireccion] ? String(row[campoDireccion]).trim() || null : null;
 
         if (!dni || !nombres) continue;
 
@@ -112,13 +113,13 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
         await request
           .input('dni', sql.VarChar(8), dni.toString().substring(0, 8))
           .input('nombres', sql.VarChar, nombres)
-          .input('campaña', sql.VarChar, campaña)
-          .input('cartera', sql.VarChar, cartera)
-          .input('sub_cartera', sql.VarChar, sub_cartera)
-          .input('producto', sql.VarChar, producto)
+          .input('campaña', sql.VarChar, campaña || null)
+          .input('cartera', sql.VarChar, cartera || null)
+          .input('sub_cartera', sql.VarChar, sub_cartera || null)
+          .input('producto', sql.VarChar, producto || null)
           .input('capital', sql.Float, capital)
-          .input('fecha_castigo', sql.Date, fecha_castigo)
-          .input('direccion', sql.VarChar, direccion)
+          .input('fecha_castigo', sql.Date, fecha_castigo || null)
+          .input('direccion', sql.VarChar, direccion || null)
           .query(`
             IF NOT EXISTS (SELECT 1 FROM cliente WHERE dni = @dni)
             BEGIN
