@@ -67,8 +67,8 @@ router.get('/campanas/lista', async (req, res) => {
   try {
     const pool = await getPool();
     const result = await pool.request()
-      .query('SELECT DISTINCT campaña FROM cliente WHERE campaña IS NOT NULL ORDER BY campaña');
-    res.json(result.recordset.map(r => r.campaña));
+      .query('SELECT DISTINCT campana FROM cliente WHERE campana IS NOT NULL ORDER BY campana');
+    res.json(result.recordset.map(r => r.campana));
   } catch (error) {
     console.error('Error al obtener campañas:', error);
     res.status(500).json({ error: 'Error al obtener campañas', message: error.message });

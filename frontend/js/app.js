@@ -85,7 +85,7 @@ async function mostrarCliente(cliente) {
     document.getElementById('clienteSubCartera').value = cliente.sub_cartera || '';
     document.getElementById('clienteProducto').value = cliente.producto || '';
     document.getElementById('clienteCapital').value = cliente.capital || '0.00';
-    document.getElementById('clienteCampana').value = cliente.campaña || '';
+    document.getElementById('clienteCampana').value = cliente.campana || '';
     
     // Guardar datos para modal
     document.getElementById('modalDNI').textContent = cliente.dni || '-';
@@ -334,7 +334,7 @@ function obtenerFiltrosPagos() {
         fecha_inicio: document.getElementById('fechaInicio').value,
         fecha_fin: document.getElementById('fechaFin').value,
         cartera: document.getElementById('spinnerCartera').value,
-        campaña: document.getElementById('spinnerCampana').value,
+        campana: document.getElementById('spinnerCampana').value,
         id_asesor: document.getElementById('spinnerAsesor').value,
         filtro_cartera: document.getElementById('checkCartera').checked,
         filtro_campana: document.getElementById('checkCampana').checked,

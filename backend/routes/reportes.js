@@ -11,7 +11,7 @@ router.post('/pagos', async (req, res) => {
       fecha_fin, 
       tipo_fecha, 
       cartera, 
-      campaña, 
+      campana, 
       id_asesor,
       filtro_cartera,
       filtro_campana,
@@ -24,7 +24,7 @@ router.post('/pagos', async (req, res) => {
         c.id,
         c.dni,
         c.nombres,
-        c.campaña,
+        c.campana,
         c.cartera,
         c.sub_cartera,
         c.producto,
@@ -67,9 +67,9 @@ router.post('/pagos', async (req, res) => {
       request.input('cartera', sql.VarChar, cartera);
     }
 
-    if (filtro_campana && campaña) {
-      query += ' AND c.campaña = @campaña';
-      request.input('campaña', sql.VarChar, campaña);
+    if (filtro_campana && campana) {
+      query += ' AND c.campana = @campana';
+      request.input('campana', sql.VarChar, campana);
     }
 
     if (filtro_asesor && id_asesor) {
@@ -95,7 +95,7 @@ router.post('/pagos/descargar', async (req, res) => {
       fecha_fin, 
       tipo_fecha, 
       cartera, 
-      campaña, 
+      campana, 
       id_asesor,
       filtro_cartera,
       filtro_campana,
@@ -107,7 +107,7 @@ router.post('/pagos/descargar', async (req, res) => {
       SELECT 
         c.dni as 'DNI Cliente',
         c.nombres as 'Nombres Cliente',
-        c.campaña as 'Campaña',
+        c.campana as 'Campaña',
         c.cartera as 'Cartera',
         c.sub_cartera as 'Sub Cartera',
         c.producto as 'Producto',
@@ -146,9 +146,9 @@ router.post('/pagos/descargar', async (req, res) => {
       request.input('cartera', sql.VarChar, cartera);
     }
 
-    if (filtro_campana && campaña) {
-      query += ' AND c.campaña = @campaña';
-      request.input('campaña', sql.VarChar, campaña);
+    if (filtro_campana && campana) {
+      query += ' AND c.campana = @campana';
+      request.input('campana', sql.VarChar, campana);
     }
 
     if (filtro_asesor && id_asesor) {
@@ -263,7 +263,7 @@ router.post('/cliente-asignacion/descargar', async (req, res) => {
         c.id as 'ID Cliente',
         c.dni as 'DNI',
         c.nombres as 'Nombres',
-        c.campaña as 'Campaña',
+        c.campana as 'Campaña',
         c.cartera as 'Cartera',
         c.sub_cartera as 'Sub Cartera',
         c.producto as 'Producto',
