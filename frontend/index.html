@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call Center - Sistema de Gestión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Página Principal -->
+    <div id="main-page" class="page active">
+        <div class="container-fluid h-100">
+            <div class="row h-100">
+                <!-- Parte izquierda - Azul claro con imagen -->
+                <div class="col-md-6 left-section">
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <div class="text-center text-white">
+                            <i class="bi bi-telephone-fill display-1 mb-4"></i>
+                            <h2 class="mb-3">Sistema de Call Center</h2>
+                            <p class="lead">Gestión de clientes y asesores</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Parte derecha - Formulario de búsqueda -->
+                <div class="col-md-6 right-section">
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <div class="search-container w-100 px-4">
+                            <h1 class="text-center mb-4 text-primary">
+                                <i class="bi bi-search"></i> Buscar Cliente
+                            </h1>
+                            
+                            <!-- Selector de tipo de búsqueda -->
+                            <div class="btn-group w-100 mb-3" role="group">
+                                <input type="radio" class="btn-check" name="searchType" id="searchDNI" value="dni" checked>
+                                <label class="btn btn-outline-primary" for="searchDNI">
+                                    <i class="bi bi-card-text"></i> DNI
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="searchType" id="searchNombres" value="nombres">
+                                <label class="btn btn-outline-primary" for="searchNombres">
+                                    <i class="bi bi-person"></i> Nombres
+                                </label>
+                            </div>
+                            
+                            <!-- Input de búsqueda -->
+                            <div class="input-group mb-3">
+                                <input type="text" 
+                                       class="form-control form-control-lg" 
+                                       id="searchInput" 
+                                       placeholder="Ingrese DNI o nombre del cliente"
+                                       autocomplete="off">
+                                <button class="btn btn-primary btn-lg" type="button" id="searchBtn">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Opciones -->
+                            <div class="options-container mt-4">
+                                <button class="btn btn-option w-100 mb-3" id="importBtn">
+                                    <i class="bi bi-upload"></i> Importar Clientes/Asesores
+                                </button>
+                                <button class="btn btn-option w-100 mb-3" id="pagosBtn">
+                                    <i class="bi bi-download"></i> Descargar Pagos
+                                </button>
+                                <button class="btn btn-option w-100 mb-3" id="rankingBtn">
+                                    <i class="bi bi-trophy"></i> Descargar Ranking de Asesores
+                                </button>
+                            </div>
+                            
+                            <!-- Feedback WhatsApp -->
+                            <div class="text-center mt-5">
+                                <p class="text-muted small mb-2">¿Problemas o sugerencias?</p>
+                                <a href="https://wa.me/51999999999" target="_blank" class="btn btn-success btn-sm">
+                                    <i class="bi bi-whatsapp"></i> Contactar Soporte
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista de Importar -->
+    <div id="import-page" class="page">
+        <div class="container mt-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card shadow-lg">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="mb-0">
+                                <i class="bi bi-upload"></i> Importar Datos
+                            </h3>
+                        </div>
+                        <div class="card-body p-5">
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <div class="import-card">
+                                        <i class="bi bi-people display-4 text-primary mb-3"></i>
+                                        <h5>Importar Clientes</h5>
+                                        <p class="text-muted">Sube un archivo Excel con datos de clientes</p>
+                                        <input type="file" 
+                                               id="fileClientes" 
+                                               accept=".xlsx,.xls" 
+                                               class="d-none">
+                                        <button class="btn btn-primary w-100" id="btnSelectClientes">
+                                            <i class="bi bi-file-earmark-excel"></i> Seleccionar Archivo
+                                        </button>
+                                        <button class="btn btn-success w-100 mt-2 d-none" id="btnSaveClientes">
+                                            <i class="bi bi-save"></i> GUARDAR
+                                        </button>
+                                        <div id="fileNameClientes" class="mt-2 text-muted small"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-4">
+                                    <div class="import-card">
+                                        <i class="bi bi-person-badge display-4 text-success mb-3"></i>
+                                        <h5>Importar Asesores</h5>
+                                        <p class="text-muted">Sube un archivo Excel con datos de asesores</p>
+                                        <input type="file" 
+                                               id="fileAsesores" 
+                                               accept=".xlsx,.xls" 
+                                               class="d-none">
+                                        <button class="btn btn-success w-100" id="btnSelectAsesores">
+                                            <i class="bi bi-file-earmark-excel"></i> Seleccionar Archivo
+                                        </button>
+                                        <button class="btn btn-success w-100 mt-2 d-none" id="btnSaveAsesores">
+                                            <i class="bi bi-save"></i> GUARDAR
+                                        </button>
+                                        <div id="fileNameAsesores" class="mt-2 text-muted small"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-4">
+                                <button class="btn btn-secondary" id="backFromImport">
+                                    <i class="bi bi-arrow-left"></i> Volver
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista de Pagos -->
+    <div id="pagos-page" class="page">
+        <div class="container mt-4">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-download"></i> Descargar Pagos
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Parte izquierda - Filtros -->
+                        <div class="col-md-6 border-end">
+                            <h5 class="mb-3">Filtros de Búsqueda</h5>
+                            
+                            <!-- Tipo de fecha -->
+                            <div class="mb-3">
+                                <label class="form-label">Tipo de Fecha</label>
+                                <select class="form-select" id="tipoFecha">
+                                    <option value="dia">1 Día</option>
+                                    <option value="rango">Rango de Fechas</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Fecha inicio -->
+                            <div class="mb-3">
+                                <label class="form-label">Fecha Inicio</label>
+                                <div class="input-group">
+                                    <input type="date" class="form-control" id="fechaInicio">
+                                </div>
+                            </div>
+                            
+                            <!-- Fecha fin -->
+                            <div class="mb-3">
+                                <label class="form-label">Fecha Fin</label>
+                                <div class="input-group">
+                                    <input type="date" class="form-control" id="fechaFin" disabled>
+                                </div>
+                            </div>
+                            
+                            <!-- Spinners -->
+                            <div class="mb-3">
+                                <label class="form-label">Cartera</label>
+                                <select class="form-select" id="spinnerCartera">
+                                    <option value="">Todas las carteras</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Campaña</label>
+                                <select class="form-select" id="spinnerCampana">
+                                    <option value="">Todas las campañas</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Asesor</label>
+                                <select class="form-select" id="spinnerAsesor">
+                                    <option value="">Todos los asesores</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Parte derecha - Checkboxes -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Activar Filtros</h5>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="checkCartera">
+                                <label class="form-check-label" for="checkCartera">
+                                    Aplicar filtro de Cartera
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="checkCampana">
+                                <label class="form-check-label" for="checkCampana">
+                                    Aplicar filtro de Campaña
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="checkAsesor">
+                                <label class="form-check-label" for="checkAsesor">
+                                    Aplicar filtro de Asesor
+                                </label>
+                            </div>
+                            
+                            <div class="mt-4 p-3 bg-light rounded">
+                                <h6>Total de Registros:</h6>
+                                <h3 class="text-primary" id="totalRegistros">0</h3>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <button class="btn btn-primary w-100 mb-2" id="btnAplicarFiltros">
+                                    <i class="bi bi-check-circle"></i> Aplicar
+                                </button>
+                                <button class="btn btn-success w-100" id="btnDescargarPagos">
+                                    <i class="bi bi-download"></i> Descargar Excel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button class="btn btn-secondary" id="backFromPagos">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista de Ranking -->
+    <div id="ranking-page" class="page">
+        <div class="container mt-4">
+            <div class="card shadow-lg">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0">
+                        <i class="bi bi-trophy"></i> Ranking de Asesores
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="btn-group w-100 mb-3" role="group">
+                                <input type="radio" class="btn-check" name="searchTypeRanking" id="searchDNIRanking" value="dni" checked>
+                                <label class="btn btn-outline-primary" for="searchDNIRanking">DNI</label>
+                                
+                                <input type="radio" class="btn-check" name="searchTypeRanking" id="searchNombresRanking" value="nombres">
+                                <label class="btn btn-outline-primary" for="searchNombresRanking">Nombres</label>
+                            </div>
+                            
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="searchInputRanking" placeholder="Buscar asesor...">
+                                <button class="btn btn-primary" id="searchBtnRanking">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tipo de Fecha</label>
+                                <select class="form-select" id="tipoFechaRanking">
+                                    <option value="dia">1 Día</option>
+                                    <option value="rango">Rango de Fechas</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Fecha Inicio</label>
+                                <input type="date" class="form-control" id="fechaInicioRanking">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Fecha Fin</label>
+                                <input type="date" class="form-control" id="fechaFinRanking" disabled>
+                            </div>
+                            
+                            <button class="btn btn-primary w-100" id="btnAplicarRanking">
+                                <i class="bi bi-check-circle"></i> Aplicar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h6>Total de Pagos</h6>
+                                    <h3 id="totalPagos">0.00</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h6>Total de Metas</h6>
+                                    <h3 id="totalMetas">0.00</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h6>Total de Clientes</h6>
+                                    <h3 id="totalClientes">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-dark">
+                                <div class="card-body text-center">
+                                    <h6>Rate %</h6>
+                                    <h3 id="rate">0.00%</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="btn btn-success" id="btnDescargarRanking">
+                            <i class="bi bi-download"></i> Descargar
+                        </button>
+                        <button class="btn btn-secondary" id="backFromRanking">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista de Detalle de Cliente -->
+    <div id="cliente-page" class="page">
+        <div class="container mt-4">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">
+                        <i class="bi bi-person"></i> Información del Cliente
+                    </h3>
+                    <button class="btn btn-light btn-sm" id="backFromCliente">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Información básica -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h4 id="clienteNombre">-</h4>
+                            <button class="btn btn-outline-info btn-sm" id="btnVerInfoPersonal">
+                                <i class="bi bi-person-eye"></i> Ver Información Personal
+                            </button>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-success btn-sm" id="btnDescargarCliente">
+                                <i class="bi bi-download"></i> Descargar Excel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Datos del cliente -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label">ID</label>
+                            <input type="text" class="form-control" id="clienteId" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">DNI</label>
+                            <input type="text" class="form-control" id="clienteDNI" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Número de Cuenta</label>
+                            <select class="form-select" id="clienteCuenta">
+                                <option value="">Seleccionar cuenta</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Cartera</label>
+                            <input type="text" class="form-control" id="clienteCartera" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label">Sub Cartera</label>
+                            <input type="text" class="form-control" id="clienteSubCartera" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Producto</label>
+                            <input type="text" class="form-control" id="clienteProducto" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Capital</label>
+                            <input type="text" class="form-control" id="clienteCapital" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Campaña</label>
+                            <input type="text" class="form-control" id="clienteCampana" readonly>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Sección ASIGNAR -->
+                    <h5 class="mb-3">
+                        <i class="bi bi-plus-circle"></i> Asignar Pago
+                    </h5>
+                    
+                    <form id="formAsignar">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Asesor</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="inputAsesor" 
+                                       placeholder="Buscar asesor..."
+                                       autocomplete="off">
+                                <div id="asesorList" class="list-group mt-2 d-none"></div>
+                                <input type="hidden" id="idAsesor">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Tipo de Pago</label>
+                                <select class="form-select" id="tipoPago" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Efectivo">Efectivo</option>
+                                    <option value="Transferencia">Transferencia</option>
+                                    <option value="Depósito">Depósito</option>
+                                    <option value="Tarjeta">Tarjeta</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Importe</label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="importe" 
+                                       step="0.01" 
+                                       min="0" 
+                                       required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Fecha de Pago</label>
+                                <input type="date" class="form-control" id="fechaPago" required>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Voucher (Imagen o PDF)</label>
+                                <input type="file" 
+                                       class="form-control" 
+                                       id="voucher" 
+                                       accept="image/*,.pdf">
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" id="btnCancelarAsignar">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modales -->
+    <!-- Modal de Información Personal -->
+    <div class="modal fade" id="modalInfoPersonal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Información Personal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>DNI:</strong> <span id="modalDNI">-</span></p>
+                    <p><strong>Dirección:</strong> <span id="modalDireccion">-</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div class="modal fade" id="modalConfirmacion" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" id="modalHeader">
+                    <h5 class="modal-title" id="modalTitle">Confirmación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <p id="modalMessage">-</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
+

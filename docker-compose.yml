@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  callcenter-app:
+    build: .
+    container_name: callcenter-web
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - DB_SERVER=${DB_SERVER}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_ENCRYPT=${DB_ENCRYPT:-true}
+      - DB_TRUST_CERT=${DB_TRUST_CERT:-true}
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+    networks:
+      - callcenter-network
+
+networks:
+  callcenter-network:
+    driver: bridge
+
