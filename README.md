@@ -134,7 +134,9 @@ docker-compose logs -f
 
 ### 5. Acceder a la aplicación
 
-Abrir el navegador en: `http://localhost:5000`
+Abrir el navegador en: `http://localhost:8080`
+
+**Nota:** El puerto externo es 8080, pero el puerto interno del contenedor sigue siendo 5000. Si necesitas cambiar el puerto externo, edita `docker-compose.yml`.
 
 ## Desarrollo Local
 
@@ -215,10 +217,10 @@ El archivo Excel debe contener:
 - Comprobar que no haya caracteres especiales problemáticos
 
 ### Puerto en uso
-Si el puerto 5000 está ocupado, cambiar en `docker-compose.yml`:
+El puerto externo por defecto es **8080**. Si necesitas cambiarlo, edita `docker-compose.yml`:
 ```yaml
 ports:
-  - "8080:5000"  # Cambiar 8080 por el puerto deseado
+  - "3001:5000"  # Cambiar 3001 por el puerto externo deseado (5000 es el interno)
 ```
 
 ## Tecnologías Utilizadas
