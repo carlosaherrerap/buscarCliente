@@ -16,10 +16,10 @@ if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
 
-// Crear asignación
+// Crear asignación (ahora usa id_cuenta en lugar de id_cliente)
 router.post('/', upload.single('voucher'), async (req, res) => {
   try {
-    const { id_cliente, id_asesor, importe, fecha_pago, tipo_pago } = req.body;
+    const { id_cuenta, id_asesor, importe, fecha_pago, tipo_pago } = req.body;
     const pool = await getPool();
     
     let voucherPath = null;
@@ -28,15 +28,15 @@ router.post('/', upload.single('voucher'), async (req, res) => {
     }
     
     const result = await pool.request()
-      .input('id_cliente', sql.Int, id_cliente)
+      .input('id_cuenta', sql.Int, id_cuenta)
       .input('id_asesor', sql.Int, id_asesor)
       .input('importe', sql.Float, importe)
       .input('fecha_pago', sql.Date, fecha_pago)
       .input('tipo_pago', sql.VarChar, tipo_pago)
       .input('voucher', sql.VarChar, voucherPath)
       .query(`
-        INSERT INTO asignacion_cliente (id_cliente, id_asesor, importe, fecha_pago, tipo_pago, voucher)
-        VALUES (@id_cliente, @id_asesor, @importe, @fecha_pago, @tipo_pago, @voucher)
+        INSERT INTO asignacion_cliente (id_cuenta, id_asesor, importe, fecha_pago, tipo_pago, voucher)
+        VALUES (@id_cuenta, @id_asesor, @importe, @fecha_pago, @tipo_pago, @voucher)
         SELECT SCOPE_IDENTITY() as id
       `);
     
@@ -51,17 +51,43 @@ router.post('/', upload.single('voucher'), async (req, res) => {
   }
 });
 
-// Obtener asignaciones de un cliente
+// Obtener asignaciones de una cuenta
+router.get('/cuenta/:id_cuenta', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input('id_cuenta', sql.Int, req.params.id_cuenta)
+      .query(`
+        SELECT ac.*, a.nombres as asesor_nombre, a.dni as asesor_dni
+        FROM asignacion_cliente ac
+        INNER JOIN asesor a ON ac.id_asesor = a.id
+        WHERE ac.id_cuenta = @id_cuenta
+        ORDER BY ac.fecha_pago DESC
+      `);
+    
+    res.json(result.recordset);
+  } catch (error) {
+    console.error('Error al obtener asignaciones:', error);
+    res.status(500).json({ error: 'Error al obtener asignaciones', message: error.message });
+  }
+});
+
+// Obtener asignaciones de un cliente (todas sus cuentas)
 router.get('/cliente/:id_cliente', async (req, res) => {
   try {
     const pool = await getPool();
     const result = await pool.request()
       .input('id_cliente', sql.Int, req.params.id_cliente)
       .query(`
-        SELECT ac.*, a.nombres as asesor_nombre, a.dni as asesor_dni
+        SELECT 
+          ac.*, 
+          a.nombres as asesor_nombre, 
+          a.dni as asesor_dni,
+          cu.numero_cuenta
         FROM asignacion_cliente ac
         INNER JOIN asesor a ON ac.id_asesor = a.id
-        WHERE ac.id_cliente = @id_cliente
+        INNER JOIN cuenta cu ON ac.id_cuenta = cu.id
+        WHERE cu.id_cliente = @id_cliente
         ORDER BY ac.fecha_pago DESC
       `);
     

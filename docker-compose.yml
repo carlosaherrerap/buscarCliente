@@ -17,6 +17,9 @@ services:
     volumes:
       - ./uploads:/app/uploads
     restart: unless-stopped
+    # Si SQL Server está en otra máquina, descomenta y ajusta:
+    # extra_hosts:
+    #   - "win-1slfd3ac22a:IP_DEL_SERVIDOR_SQL"
     networks:
       - callcenter-network
 

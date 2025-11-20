@@ -21,16 +21,21 @@ router.post('/pagos', async (req, res) => {
     const pool = await getPool();
     let query = `
       SELECT 
-        c.id,
-        c.dni,
-        c.nombres,
-        c.campana,
-        c.cartera,
-        c.sub_cartera,
-        c.producto,
-        c.capital,
-        c.fecha_castigo,
-        c.direccion,
+        cl.id as cliente_id,
+        cl.dni,
+        cl.nombres,
+        cl.direccion,
+        cu.id as cuenta_id,
+        cu.numero_cuenta,
+        cu.campana,
+        cu.sub_cartera,
+        cu.producto,
+        cu.capital,
+        cu.deuda_total,
+        cu.fecha_castigo,
+        ca.id as cartera_id,
+        ca.nombre as cartera,
+        ca.tipo as cartera_tipo,
         ac.id as asignacion_id,
         ac.importe,
         ac.fecha_pago,
@@ -39,7 +44,9 @@ router.post('/pagos', async (req, res) => {
         a.nombres as asesor_nombre,
         a.dni as asesor_dni
       FROM asignacion_cliente ac
-      INNER JOIN cliente c ON ac.id_cliente = c.id
+      INNER JOIN cuenta cu ON ac.id_cuenta = cu.id
+      INNER JOIN cliente cl ON cu.id_cliente = cl.id
+      INNER JOIN cartera ca ON cu.id_cartera = ca.id
       INNER JOIN asesor a ON ac.id_asesor = a.id
       WHERE 1=1
     `;
@@ -63,12 +70,12 @@ router.post('/pagos', async (req, res) => {
 
     // Filtros opcionales (solo si el checkbox está activo)
     if (filtro_cartera && cartera) {
-      query += ' AND c.cartera = @cartera';
-      request.input('cartera', sql.VarChar, cartera);
+      query += ' AND ca.id = @cartera';
+      request.input('cartera', sql.Int, cartera);
     }
 
     if (filtro_campana && campana) {
-      query += ' AND c.campana = @campana';
+      query += ' AND cu.campana = @campana';
       request.input('campana', sql.VarChar, campana);
     }
 
@@ -105,13 +112,17 @@ router.post('/pagos/descargar', async (req, res) => {
     const pool = await getPool();
     let query = `
       SELECT 
-        c.dni as 'DNI Cliente',
-        c.nombres as 'Nombres Cliente',
-        c.campana as 'Campaña',
-        c.cartera as 'Cartera',
-        c.sub_cartera as 'Sub Cartera',
-        c.producto as 'Producto',
-        c.capital as 'Capital',
+        cl.dni as 'DNI Cliente',
+        cl.nombres as 'Nombres Cliente',
+        cu.numero_cuenta as 'Número de Cuenta',
+        cu.campana as 'Campaña',
+        ca.nombre as 'Cartera',
+        ca.tipo as 'Tipo Cartera',
+        cu.sub_cartera as 'Sub Cartera',
+        cu.producto as 'Producto',
+        cu.capital as 'Capital',
+        cu.deuda_total as 'Deuda Total',
+        cu.fecha_castigo as 'Fecha Castigo',
         a.dni as 'DNI Asesor',
         a.nombres as 'Nombre Asesor',
         ac.importe as 'Importe',
@@ -119,7 +130,9 @@ router.post('/pagos/descargar', async (req, res) => {
         ac.tipo_pago as 'Tipo Pago',
         ac.voucher as 'Voucher'
       FROM asignacion_cliente ac
-      INNER JOIN cliente c ON ac.id_cliente = c.id
+      INNER JOIN cuenta cu ON ac.id_cuenta = cu.id
+      INNER JOIN cliente cl ON cu.id_cliente = cl.id
+      INNER JOIN cartera ca ON cu.id_cartera = ca.id
       INNER JOIN asesor a ON ac.id_asesor = a.id
       WHERE 1=1
     `;
@@ -142,12 +155,12 @@ router.post('/pagos/descargar', async (req, res) => {
     }
 
     if (filtro_cartera && cartera) {
-      query += ' AND c.cartera = @cartera';
-      request.input('cartera', sql.VarChar, cartera);
+      query += ' AND ca.id = @cartera';
+      request.input('cartera', sql.Int, cartera);
     }
 
     if (filtro_campana && campana) {
-      query += ' AND c.campana = @campana';
+      query += ' AND cu.campana = @campana';
       request.input('campana', sql.VarChar, campana);
     }
 
@@ -205,10 +218,11 @@ router.post('/ranking', async (req, res) => {
     // Calcular estadísticas
     let queryStats = `
       SELECT 
-        COUNT(DISTINCT ac.id_cliente) as total_clientes,
+        COUNT(DISTINCT cu.id_cliente) as total_clientes,
         SUM(ac.importe) as total_pagos,
         COUNT(ac.id) as cantidad_pagos
       FROM asignacion_cliente ac
+      INNER JOIN cuenta cu ON ac.id_cuenta = cu.id
       WHERE ac.id_asesor = @id_asesor
     `;
 
@@ -260,27 +274,33 @@ router.post('/cliente-asignacion/descargar', async (req, res) => {
 
     const query = `
       SELECT 
-        c.id as 'ID Cliente',
-        c.dni as 'DNI',
-        c.nombres as 'Nombres',
-        c.campana as 'Campaña',
-        c.cartera as 'Cartera',
-        c.sub_cartera as 'Sub Cartera',
-        c.producto as 'Producto',
-        c.capital as 'Capital',
-        c.fecha_castigo as 'Fecha Castigo',
-        c.direccion as 'Dirección',
+        cl.id as 'ID Cliente',
+        cl.dni as 'DNI',
+        cl.nombres as 'Nombres',
+        cl.direccion as 'Dirección',
+        cu.id as 'ID Cuenta',
+        cu.numero_cuenta as 'Número de Cuenta',
+        cu.campana as 'Campaña',
+        ca.nombre as 'Cartera',
+        ca.tipo as 'Tipo Cartera',
+        cu.sub_cartera as 'Sub Cartera',
+        cu.producto as 'Producto',
+        cu.capital as 'Capital',
+        cu.deuda_total as 'Deuda Total',
+        cu.fecha_castigo as 'Fecha Castigo',
         a.dni as 'DNI Asesor',
         a.nombres as 'Nombre Asesor',
         ac.importe as 'Importe',
         ac.fecha_pago as 'Fecha Pago',
         ac.tipo_pago as 'Tipo Pago',
         ac.voucher as 'Voucher'
-      FROM cliente c
-      LEFT JOIN asignacion_cliente ac ON c.id = ac.id_cliente
+      FROM cliente cl
+      INNER JOIN cuenta cu ON cl.id = cu.id_cliente
+      INNER JOIN cartera ca ON cu.id_cartera = ca.id
+      LEFT JOIN asignacion_cliente ac ON cu.id = ac.id_cuenta
       LEFT JOIN asesor a ON ac.id_asesor = a.id
-      WHERE c.id = @id_cliente
-      ORDER BY ac.fecha_pago DESC
+      WHERE cl.id = @id_cliente
+      ORDER BY cu.numero_cuenta, ac.fecha_pago DESC
     `;
 
     const result = await pool.request()

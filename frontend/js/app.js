@@ -81,40 +81,60 @@ async function mostrarCliente(cliente) {
     document.getElementById('clienteId').value = cliente.id;
     document.getElementById('clienteDNI').value = cliente.dni || '';
     document.getElementById('clienteNombre').textContent = cliente.nombres || '-';
-    document.getElementById('clienteCartera').value = cliente.cartera || '';
-    document.getElementById('clienteSubCartera').value = cliente.sub_cartera || '';
-    document.getElementById('clienteProducto').value = cliente.producto || '';
-    document.getElementById('clienteCapital').value = cliente.capital || '0.00';
-    document.getElementById('clienteCampana').value = cliente.campana || '';
     
     // Guardar datos para modal
     document.getElementById('modalDNI').textContent = cliente.dni || '-';
     document.getElementById('modalDireccion').textContent = cliente.direccion || '-';
     
-    // Cargar asignaciones para el spinner de cuenta
-    await cargarAsignacionesCliente(cliente.id);
+    // Cargar cuentas del cliente para el spinner
+    await cargarCuentasCliente(cliente.id);
+    
+    // Si hay cuentas, mostrar la primera por defecto
+    if (cliente.cuentas && cliente.cuentas.length > 0) {
+        mostrarCuentaSeleccionada(cliente.cuentas[0]);
+    }
     
     showPage('cliente-page');
 }
 
-async function cargarAsignacionesCliente(idCliente) {
+async function cargarCuentasCliente(idCliente) {
     try {
-        const response = await fetch(`${API_URL}/asignaciones/cliente/${idCliente}`);
-        const asignaciones = await response.json();
+        const response = await fetch(`${API_URL}/clientes/${idCliente}/cuentas`);
+        const cuentas = await response.json();
         
         const select = document.getElementById('clienteCuenta');
         select.innerHTML = '<option value="">Seleccionar cuenta</option>';
         
-        asignaciones.forEach((asig, index) => {
+        cuentas.forEach((cuenta) => {
             const option = document.createElement('option');
-            option.value = asig.id;
-            option.textContent = `Cuenta ${index + 1} - ${asig.fecha_pago} - S/ ${asig.importe}`;
+            option.value = cuenta.id;
+            option.textContent = cuenta.numero_cuenta;
+            option.dataset.cuenta = JSON.stringify(cuenta);
             select.appendChild(option);
         });
+        
+        // Agregar listener para cuando se seleccione una cuenta
+        select.addEventListener('change', (e) => {
+            if (e.target.value) {
+                const cuenta = JSON.parse(e.target.selectedOptions[0].dataset.cuenta);
+                mostrarCuentaSeleccionada(cuenta);
+            }
+        });
     } catch (error) {
-        console.error('Error al cargar asignaciones:', error);
+        console.error('Error al cargar cuentas:', error);
     }
 }
+
+function mostrarCuentaSeleccionada(cuenta) {
+    document.getElementById('clienteCartera').value = cuenta.cartera_nombre || '';
+    document.getElementById('clienteSubCartera').value = cuenta.sub_cartera || '';
+    document.getElementById('clienteProducto').value = cuenta.producto || '';
+    document.getElementById('clienteCapital').value = cuenta.capital || '0.00';
+    document.getElementById('clienteDeudaTotal').value = cuenta.deuda_total || '0.00';
+    document.getElementById('clienteCampana').value = cuenta.campana || '';
+    document.getElementById('clienteFechaCastigo').value = cuenta.fecha_castigo || '';
+}
+
 
 // ========== VISTA DE IMPORTAR ==========
 document.getElementById('backFromImport').addEventListener('click', () => showPage('main-page'));
@@ -237,8 +257,8 @@ async function cargarCarteras() {
         select.innerHTML = '<option value="">Todas las carteras</option>';
         carteras.forEach(cartera => {
             const option = document.createElement('option');
-            option.value = cartera;
-            option.textContent = cartera;
+            option.value = cartera.id;
+            option.textContent = `${cartera.nombre} (${cartera.tipo})`;
             select.appendChild(option);
         });
     } catch (error) {
@@ -503,8 +523,14 @@ document.getElementById('formAsignar').addEventListener('submit', async (e) => {
         return;
     }
     
+    const idCuenta = document.getElementById('clienteCuenta').value;
+    if (!idCuenta) {
+        showModal('Error', 'Por favor seleccione una cuenta', 'error');
+        return;
+    }
+    
     const formData = new FormData();
-    formData.append('id_cliente', idCliente);
+    formData.append('id_cuenta', idCuenta);
     formData.append('id_asesor', idAsesor);
     formData.append('importe', importe);
     formData.append('fecha_pago', fechaPago);
@@ -525,7 +551,8 @@ document.getElementById('formAsignar').addEventListener('submit', async (e) => {
             showModal('Éxito', 'Asignación guardada correctamente');
             document.getElementById('formAsignar').reset();
             document.getElementById('idAsesor').value = '';
-            await cargarAsignacionesCliente(idCliente);
+            const idCliente = document.getElementById('clienteId').value;
+            await cargarCuentasCliente(idCliente);
         } else {
             showModal('Error', data.error || 'Error al guardar asignación', 'error');
         }
@@ -539,4 +566,5 @@ document.getElementById('btnCancelarAsignar').addEventListener('click', () => {
     document.getElementById('formAsignar').reset();
     document.getElementById('idAsesor').value = '';
 });
+
 

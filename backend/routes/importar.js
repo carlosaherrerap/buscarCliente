@@ -36,7 +36,7 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
     }
 
     // Validar campos requeridos - Buscar los campos exactos del Excel
-    const camposRequeridos = ['DNI', 'NOMBRE Y APELLIDOS'];
+    const camposRequeridos = ['DNI', 'NOMBRE Y APELLIDOS', 'NUMERO DE CUENTA'];
     const camposEncontrados = Object.keys(data[0]);
     
     // Función para buscar campo (case insensitive y con espacios)
@@ -49,6 +49,7 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
     
     const campoDNI = buscarCampo('DNI');
     const campoNombres = buscarCampo('NOMBRE Y APELLIDOS');
+    const campoNumeroCuenta = buscarCampo('NUMERO DE CUENTA');
     
     if (!campoDNI) {
       return res.status(400).json({ 
@@ -59,6 +60,12 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
     if (!campoNombres) {
       return res.status(400).json({ 
         error: 'No se encontró el campo: NOMBRE Y APELLIDOS' 
+      });
+    }
+    
+    if (!campoNumeroCuenta) {
+      return res.status(400).json({ 
+        error: 'No se encontró el campo: NUMERO DE CUENTA' 
       });
     }
 
@@ -91,31 +98,38 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
         const campoSubCartera = buscarCampo('SUB CARTERA');
         const campoProducto = buscarCampo('PRODUCTO');
         const campoCapital = buscarCampo('CAPITAL');
+        const campoDeudaTotal = buscarCampo('DEUDA TOTAL');
         const campoCampana = buscarCampo('CAMPAÑA') || buscarCampo('CAMPANA');
         const campoFechaCastigo = buscarCampo('FECHA CASTIGO') || buscarCampo('FECHA_CASTIGO');
         const campoDireccion = buscarCampo('DIRECCION COMPLETA') || buscarCampo('DIRECCIÓN COMPLETA') || buscarCampo('DIRECCION');
         
         console.log('Campos encontrados:');
+        console.log(`  - NUMERO DE CUENTA: ${campoNumeroCuenta || 'NO ENCONTRADO'}`);
         console.log(`  - CARTERA: ${campoCartera || 'NO ENCONTRADO'}`);
         console.log(`  - SUB CARTERA: ${campoSubCartera || 'NO ENCONTRADO'}`);
         console.log(`  - PRODUCTO: ${campoProducto || 'NO ENCONTRADO'}`);
         console.log(`  - CAPITAL: ${campoCapital || 'NO ENCONTRADO'}`);
+        console.log(`  - DEUDA TOTAL: ${campoDeudaTotal || 'NO ENCONTRADO'}`);
         console.log(`  - CAMPAÑA/CAMPANA: ${campoCampana || 'NO ENCONTRADO'}`);
         console.log(`  - FECHA CASTIGO: ${campoFechaCastigo || 'NO ENCONTRADO'}`);
         console.log(`  - DIRECCION: ${campoDireccion || 'NO ENCONTRADO'}`);
         
         // Convertir valores a string y manejar null/undefined correctamente
-        const cartera = campoCartera && row[campoCartera] ? String(row[campoCartera]).trim() || null : null;
+        const numero_cuenta = campoNumeroCuenta && row[campoNumeroCuenta] ? String(row[campoNumeroCuenta]).trim() : '';
+        const nombreCartera = campoCartera && row[campoCartera] ? String(row[campoCartera]).trim() || null : null;
         const sub_cartera = campoSubCartera && row[campoSubCartera] ? String(row[campoSubCartera]).trim() || null : null;
         const producto = campoProducto && row[campoProducto] ? String(row[campoProducto]).trim() || null : null;
         const capital = campoCapital && row[campoCapital] ? (parseFloat(row[campoCapital]) || 0) : 0;
+        const deuda_total = campoDeudaTotal && row[campoDeudaTotal] ? (parseFloat(row[campoDeudaTotal]) || 0) : 0;
         const campana = campoCampana && row[campoCampana] ? String(row[campoCampana]).trim() || null : null;
         
         console.log('Valores extraídos:');
-        console.log(`  - cartera: ${cartera}`);
+        console.log(`  - numero_cuenta: ${numero_cuenta}`);
+        console.log(`  - nombreCartera: ${nombreCartera}`);
         console.log(`  - sub_cartera: ${sub_cartera}`);
         console.log(`  - producto: ${producto}`);
         console.log(`  - capital: ${capital}`);
+        console.log(`  - deuda_total: ${deuda_total}`);
         console.log(`  - campana: ${campana}`);
         
         // Manejar fecha_castigo - puede venir como fecha de Excel o string
@@ -140,45 +154,82 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
         const direccion = campoDireccion && row[campoDireccion] ? String(row[campoDireccion]).trim() || null : null;
         console.log(`  - direccion: ${direccion}`);
 
-        if (!dni || !nombres) {
-          console.log('⚠️  Fila omitida: DNI o nombres vacíos');
+        if (!dni || !nombres || !numero_cuenta) {
+          console.log('⚠️  Fila omitida: DNI, nombres o número de cuenta vacíos');
           continue;
         }
 
-        console.log('📝 Preparando consulta SQL...');
-        const sqlQuery = `
-            IF NOT EXISTS (SELECT 1 FROM cliente WHERE dni = @dni)
-            BEGIN
-              INSERT INTO cliente (dni, nombres, campana, cartera, sub_cartera, producto, capital, fecha_castigo, direccion)
-              VALUES (@dni, @nombres, @campana, @cartera, @sub_cartera, @producto, @capital, @fecha_castigo, @direccion)
-            END
-          `;
-        console.log('SQL Query:', sqlQuery.replace(/\s+/g, ' ').trim());
-        console.log('Parámetros:');
-        console.log(`  - dni: ${dni.toString().substring(0, 8)}`);
-        console.log(`  - nombres: ${nombres}`);
-        console.log(`  - campana: ${campana || 'NULL'}`);
-        console.log(`  - cartera: ${cartera || 'NULL'}`);
-        console.log(`  - sub_cartera: ${sub_cartera || 'NULL'}`);
-        console.log(`  - producto: ${producto || 'NULL'}`);
-        console.log(`  - capital: ${capital}`);
-        console.log(`  - fecha_castigo: ${fecha_castigo || 'NULL'}`);
-        console.log(`  - direccion: ${direccion || 'NULL'}`);
+        if (!nombreCartera) {
+          console.log('⚠️  Fila omitida: Cartera es requerida');
+          continue;
+        }
 
-        const request = new sql.Request(transaction);
-        console.log('🔄 Ejecutando consulta SQL...');
-        await request
+        console.log('📝 Preparando consultas SQL...');
+
+        // 1. Crear o obtener cliente
+        let request = new sql.Request(transaction);
+        let clienteResult = await request
           .input('dni', sql.VarChar(8), dni.toString().substring(0, 8))
           .input('nombres', sql.VarChar, nombres)
-          .input('campana', sql.VarChar, campana || null)
-          .input('cartera', sql.VarChar, cartera || null)
-          .input('sub_cartera', sql.VarChar, sub_cartera || null)
-          .input('producto', sql.VarChar, producto || null)
-          .input('capital', sql.Float, capital)
-          .input('fecha_castigo', sql.Date, fecha_castigo || null)
           .input('direccion', sql.VarChar, direccion || null)
-          .query(sqlQuery);
-        console.log('✓ Fila insertada correctamente');
+          .query(`
+            IF NOT EXISTS (SELECT 1 FROM cliente WHERE dni = @dni)
+            BEGIN
+              INSERT INTO cliente (dni, nombres, direccion)
+              VALUES (@dni, @nombres, @direccion)
+            END
+            SELECT id FROM cliente WHERE dni = @dni
+          `);
+        const id_cliente = clienteResult.recordset[0].id;
+        console.log(`✓ Cliente obtenido/creado: ID ${id_cliente}`);
+
+        // 2. Crear o obtener cartera (tipo por defecto: 'castigada')
+        request = new sql.Request(transaction);
+        let carteraResult = await request
+          .input('nombre', sql.VarChar, nombreCartera)
+          .query(`
+            IF NOT EXISTS (SELECT 1 FROM cartera WHERE nombre = @nombre)
+            BEGIN
+              INSERT INTO cartera (nombre, tipo)
+              VALUES (@nombre, 'castigada')
+            END
+            SELECT id FROM cartera WHERE nombre = @nombre
+          `);
+        const id_cartera = carteraResult.recordset[0].id;
+        console.log(`✓ Cartera obtenida/creada: ID ${id_cartera} (${nombreCartera})`);
+
+        // 3. Crear o actualizar cuenta
+        request = new sql.Request(transaction);
+        await request
+          .input('id_cliente', sql.Int, id_cliente)
+          .input('numero_cuenta', sql.VarChar, numero_cuenta)
+          .input('id_cartera', sql.Int, id_cartera)
+          .input('capital', sql.Float, capital)
+          .input('deuda_total', sql.Float, deuda_total)
+          .input('producto', sql.VarChar, producto || null)
+          .input('sub_cartera', sql.VarChar, sub_cartera || null)
+          .input('campana', sql.VarChar, campana || null)
+          .input('fecha_castigo', sql.Date, fecha_castigo || null)
+          .query(`
+            IF NOT EXISTS (SELECT 1 FROM cuenta WHERE id_cliente = @id_cliente AND numero_cuenta = @numero_cuenta)
+            BEGIN
+              INSERT INTO cuenta (id_cliente, numero_cuenta, id_cartera, capital, deuda_total, producto, sub_cartera, campana, fecha_castigo)
+              VALUES (@id_cliente, @numero_cuenta, @id_cartera, @capital, @deuda_total, @producto, @sub_cartera, @campana, @fecha_castigo)
+            END
+            ELSE
+            BEGIN
+              UPDATE cuenta 
+              SET id_cartera = @id_cartera,
+                  capital = @capital,
+                  deuda_total = @deuda_total,
+                  producto = @producto,
+                  sub_cartera = @sub_cartera,
+                  campana = @campana,
+                  fecha_castigo = @fecha_castigo
+              WHERE id_cliente = @id_cliente AND numero_cuenta = @numero_cuenta
+            END
+          `);
+        console.log(`✓ Cuenta ${numero_cuenta} creada/actualizada correctamente`);
       }
 
       console.log('\n========================================');

@@ -6,7 +6,7 @@
 -- ============================================================
 
 -- Cambiar el nombre de la base de datos según corresponda
-DECLARE @dbname NVARCHAR(128) = 'gestioncliente';
+DECLARE @dbname NVARCHAR(128) = 'clientManager';
 
 -- Cerrar todas las conexiones activas a la base de datos
 DECLARE @sql NVARCHAR(MAX) = '';
@@ -32,14 +32,14 @@ USE master;
 GO
 
 -- Poner la base de datos en modo SINGLE_USER para poder eliminarla
-ALTER DATABASE gestioncliente SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+ALTER DATABASE clientManager SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
 GO
 
 -- Eliminar la base de datos
-DROP DATABASE gestioncliente;
+DROP DATABASE clientManager;
 GO
 
-PRINT 'Base de datos gestioncliente eliminada exitosamente';
+PRINT 'Base de datos clientManager eliminada exitosamente';
 PRINT 'Ahora puedes ejecutar create_tables.sql para crear las tablas nuevamente';
 GO
 

@@ -58,7 +58,7 @@ if (!found) {
   console.log('DB_SERVER=WIN-1SLFD3AC22A\\DATACENTERSERVER');
   console.log('DB_USER=sa');
   console.log('DB_PASSWORD=Administrador2025$$');
-  console.log('DB_NAME=gestioncliente');
+  console.log('DB_NAME=clientManager');
   console.log('DB_ENCRYPT=true');
   console.log('DB_TRUST_CERT=true');
   console.log('PORT=5000');
