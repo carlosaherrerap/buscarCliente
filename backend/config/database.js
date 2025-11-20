@@ -1,14 +1,19 @@
 const sql = require('mssql');
 
+// Configuración de conexión a SQL Server
 const config = {
   user: process.env.DB_USER || 'sa',
   password: process.env.DB_PASSWORD || '',
   server: process.env.DB_SERVER || 'localhost',
   database: process.env.DB_NAME || 'CallCenterDB',
   options: {
-    encrypt: process.env.DB_ENCRYPT === 'true',
+    encrypt: process.env.DB_ENCRYPT === 'true' || true,
     trustServerCertificate: process.env.DB_TRUST_CERT === 'true' || true,
-    enableArithAbort: true
+    enableArithAbort: true,
+    // Configuraciones adicionales para mejorar la conexión
+    instanceName: process.env.DB_INSTANCE || undefined,
+    requestTimeout: 30000,
+    connectionTimeout: 30000
   },
   pool: {
     max: 10,
@@ -16,6 +21,14 @@ const config = {
     idleTimeoutMillis: 30000
   }
 };
+
+// Log de configuración (sin mostrar la contraseña)
+console.log('Configuración de conexión:');
+console.log('  Server:', config.server);
+console.log('  Database:', config.database);
+console.log('  User:', config.user);
+console.log('  Encrypt:', config.options.encrypt);
+console.log('  Trust Certificate:', config.options.trustServerCertificate);
 
 let pool = null;
 

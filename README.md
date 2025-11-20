@@ -185,16 +185,17 @@ npm run dev
 ## Formato de Archivos Excel
 
 ### Para Clientes
-El archivo Excel debe contener las siguientes columnas (case insensitive):
-- `dni` (requerido)
-- `nombres` (requerido)
-- `campaña`
-- `cartera`
-- `sub_cartera`
-- `producto`
-- `capital`
-- `fecha_castigo`
-- `direccion`
+El archivo Excel debe contener las siguientes columnas (los nombres son case insensitive):
+- `DNI` (requerido)
+- `NOMBRE Y APELLIDOS` (requerido)
+- `CARTERA` (opcional)
+- `SUB CARTERA` (opcional)
+- `PRODUCTO` (opcional)
+- `CAPITAL` (opcional)
+- `CAMPAÑA` o `CAMPANA` (opcional)
+- `DIRECCION COMPLETA` o `DIRECCIÓN COMPLETA` (opcional)
+
+**Nota**: El sistema busca los campos de forma flexible, aceptando variaciones en mayúsculas/minúsculas y espacios.
 
 ### Para Asesores
 El archivo Excel debe contener:

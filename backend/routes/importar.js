@@ -33,16 +33,30 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
       return res.status(400).json({ error: 'El archivo Excel está vacío' });
     }
 
-    // Validar campos requeridos
-    const camposRequeridos = ['dni', 'nombres'];
+    // Validar campos requeridos - Buscar los campos exactos del Excel
+    const camposRequeridos = ['DNI', 'NOMBRE Y APELLIDOS'];
     const camposEncontrados = Object.keys(data[0]);
-    const camposFaltantes = camposRequeridos.filter(campo => 
-      !camposEncontrados.some(c => c.toLowerCase().includes(campo.toLowerCase()))
-    );
-
-    if (camposFaltantes.length > 0) {
+    
+    // Función para buscar campo (case insensitive y con espacios)
+    const buscarCampo = (nombreBuscado) => {
+      return camposEncontrados.find(c => 
+        c.trim().toUpperCase().replace(/\s+/g, ' ') === nombreBuscado.toUpperCase().trim() ||
+        c.trim().toUpperCase().replace(/\s+/g, '') === nombreBuscado.toUpperCase().trim().replace(/\s+/g, '')
+      );
+    };
+    
+    const campoDNI = buscarCampo('DNI');
+    const campoNombres = buscarCampo('NOMBRE Y APELLIDOS');
+    
+    if (!campoDNI) {
       return res.status(400).json({ 
-        error: `No se encontraron los campos: ${camposFaltantes.join(', ')}` 
+        error: 'No se encontró el campo: DNI' 
+      });
+    }
+    
+    if (!campoNombres) {
+      return res.status(400).json({ 
+        error: 'No se encontró el campo: NOMBRE Y APELLIDOS' 
       });
     }
 
@@ -53,16 +67,24 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
 
     try {
       for (const row of data) {
-        // Mapear campos (case insensitive)
-        const dni = row.dni || row.DNI || row.Dni || '';
-        const nombres = row.nombres || row.Nombres || row.NOMBRES || '';
-        const campaña = row.campaña || row.Campaña || row.CAMPAÑA || row.campana || row.Campana || null;
-        const cartera = row.cartera || row.Cartera || row.CARTERA || null;
-        const sub_cartera = row.sub_cartera || row.Sub_Cartera || row.SUB_CARTERA || row.subcartera || null;
-        const producto = row.producto || row.Producto || row.PRODUCTO || null;
-        const capital = parseFloat(row.capital || row.Capital || row.CAPITAL || 0) || 0;
-        const fecha_castigo = row.fecha_castigo || row.Fecha_Castigo || row.FECHA_CASTIGO || null;
-        const direccion = row.direccion || row.Direccion || row.DIRECCION || null;
+        // Mapear campos exactos del Excel (case insensitive)
+        const dni = row[campoDNI] || '';
+        const nombres = row[campoNombres] || '';
+        
+        // Buscar campos opcionales
+        const campoCartera = buscarCampo('CARTERA');
+        const campoSubCartera = buscarCampo('SUB CARTERA');
+        const campoProducto = buscarCampo('PRODUCTO');
+        const campoCapital = buscarCampo('CAPITAL');
+        const campoCampana = buscarCampo('CAMPAÑA') || buscarCampo('CAMPANA');
+        const campoDireccion = buscarCampo('DIRECCION COMPLETA') || buscarCampo('DIRECCIÓN COMPLETA');
+        
+        const cartera = campoCartera ? (row[campoCartera] || null) : null;
+        const sub_cartera = campoSubCartera ? (row[campoSubCartera] || null) : null;
+        const producto = campoProducto ? (row[campoProducto] || null) : null;
+        const capital = campoCapital ? (parseFloat(row[campoCapital]) || 0) : 0;
+        const campaña = campoCampana ? (row[campoCampana] || null) : null;
+        const direccion = campoDireccion ? (row[campoDireccion] || null) : null;
 
         if (!dni || !nombres) continue;
 
