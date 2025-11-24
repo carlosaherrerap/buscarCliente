@@ -35,11 +35,36 @@ if (!envLoaded) {
 
 const sql = require('mssql');
 
+// Detectar si estamos en Docker
+const isDocker = process.env.DOCKER === 'true' || fs.existsSync('/.dockerenv');
+
+// Función para procesar el servidor SQL
+function processServerName(serverName) {
+  if (!serverName) return 'localhost';
+  
+  // Si estamos en Docker y el servidor es un nombre de Windows, usar host.docker.internal
+  if (isDocker) {
+    // Detectar si es un nombre de servidor Windows (contiene \ o es un nombre de máquina)
+    const windowsServerPattern = /^[A-Z0-9_-]+(\\[A-Z0-9_-]+)?$/i;
+    if (windowsServerPattern.test(serverName) && !serverName.includes('host.docker.internal')) {
+      // Reemplazar el nombre del servidor con host.docker.internal pero mantener la instancia
+      const parts = serverName.split('\\');
+      if (parts.length > 1) {
+        return `host.docker.internal\\${parts[1]}`;
+      } else {
+        return 'host.docker.internal';
+      }
+    }
+  }
+  
+  return serverName;
+}
+
 // Configuración de conexión a SQL Server
 const config = {
   user: process.env.DB_USER || 'sa',
   password: process.env.DB_PASSWORD || '',
-  server: process.env.DB_SERVER || 'localhost',
+  server: processServerName(process.env.DB_SERVER) || 'localhost',
   database: process.env.DB_NAME || 'CallCenterDB',
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true' || true,
@@ -69,7 +94,9 @@ console.log('  process.env.DB_NAME:', process.env.DB_NAME || 'NO DEFINIDA');
 console.log('  process.env.DB_PASSWORD:', process.env.DB_PASSWORD ? '***' + process.env.DB_PASSWORD.slice(-2) + ' (length: ' + process.env.DB_PASSWORD.length + ')' : 'NO DEFINIDA');
 console.log('');
 console.log('Configuración final que se usará:');
-console.log('  Server:', config.server);
+console.log('  Entorno Docker detectado:', isDocker ? 'SÍ' : 'NO');
+console.log('  Server original:', process.env.DB_SERVER || 'NO DEFINIDA');
+console.log('  Server procesado:', config.server);
 console.log('  Database:', config.database);
 console.log('  User:', config.user);
 console.log('  Password:', config.password ? '***' + config.password.slice(-2) + ' (length: ' + config.password.length + ')' : 'NO DEFINIDA');

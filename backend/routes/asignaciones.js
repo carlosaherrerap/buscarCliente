@@ -58,7 +58,7 @@ router.get('/cuenta/:id_cuenta', async (req, res) => {
     const result = await pool.request()
       .input('id_cuenta', sql.Int, req.params.id_cuenta)
       .query(`
-        SELECT ac.*, a.nombres as asesor_nombre, a.dni as asesor_dni
+        SELECT ac.*, a.nombre as asesor_nombre, a.dni as asesor_dni
         FROM asignacion_cliente ac
         INNER JOIN asesor a ON ac.id_asesor = a.id
         WHERE ac.id_cuenta = @id_cuenta
@@ -81,7 +81,7 @@ router.get('/cliente/:id_cliente', async (req, res) => {
       .query(`
         SELECT 
           ac.*, 
-          a.nombres as asesor_nombre, 
+          a.nombre as asesor_nombre, 
           a.dni as asesor_dni,
           cu.numero_cuenta
         FROM asignacion_cliente ac

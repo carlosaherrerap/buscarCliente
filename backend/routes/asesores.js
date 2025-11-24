@@ -15,8 +15,8 @@ router.get('/buscar', async (req, res) => {
       query += ' AND dni = @dni';
       params.push({ name: 'dni', type: sql.VarChar(8), value: dni });
     } else if (tipo === 'nombres' && nombres) {
-      query += ' AND nombres LIKE @nombres';
-      params.push({ name: 'nombres', type: sql.VarChar, value: `%${nombres}%` });
+      query += ' AND nombre LIKE @nombre';
+      params.push({ name: 'nombre', type: sql.VarChar, value: `%${nombres}%` });
     }
     
     const request = pool.request();
@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
   try {
     const pool = await getPool();
     const result = await pool.request()
-      .query('SELECT * FROM asesor ORDER BY nombres');
+      .query('SELECT * FROM asesor ORDER BY nombre');
     res.json(result.recordset);
   } catch (error) {
     console.error('Error al obtener asesores:', error);

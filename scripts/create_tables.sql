@@ -4,27 +4,6 @@
 USE clientManager;
 GO
 
--- Eliminar tablas si existen (en orden correcto por dependencias)
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[asignacion_cliente]') AND type in (N'U'))
-    DROP TABLE asignacion_cliente;
-GO
-
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[cuenta]') AND type in (N'U'))
-    DROP TABLE cuenta;
-GO
-
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[cliente]') AND type in (N'U'))
-    DROP TABLE cliente;
-GO
-
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[cartera]') AND type in (N'U'))
-    DROP TABLE cartera;
-GO
-
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[asesor]') AND type in (N'U'))
-    DROP TABLE asesor;
-GO
-
 -- Crear tabla cartera
 CREATE TABLE cartera (
     id INT IDENTITY(1,1) PRIMARY KEY,
@@ -34,9 +13,6 @@ CREATE TABLE cartera (
 GO
 
 CREATE INDEX IX_cartera_nombre ON cartera(nombre);
-GO
-
-PRINT 'Tabla cartera creada exitosamente';
 GO
 
 -- Crear tabla cliente (solo datos personales)
@@ -52,9 +28,6 @@ CREATE INDEX IX_cliente_dni ON cliente(dni);
 GO
 
 CREATE INDEX IX_cliente_nombres ON cliente(nombres);
-GO
-
-PRINT 'Tabla cliente creada exitosamente';
 GO
 
 -- Crear tabla cuenta (relaciona cliente con cartera, un cliente puede tener múltiples cuentas)
@@ -83,28 +56,47 @@ GO
 CREATE INDEX IX_cuenta_numero ON cuenta(numero_cuenta);
 GO
 
--- Índice único para evitar duplicados de número de cuenta por cliente
 CREATE UNIQUE INDEX IX_cuenta_cliente_numero ON cuenta(id_cliente, numero_cuenta);
-GO
-
-PRINT 'Tabla cuenta creada exitosamente';
 GO
 
 -- Crear tabla asesor
 CREATE TABLE asesor (
     id INT IDENTITY(1,1) PRIMARY KEY,
     dni CHAR(8) NOT NULL,
-    nombres VARCHAR(255) NOT NULL
+    nombre VARCHAR(255) NOT NULL,
+    cargo VARCHAR(255) NULL,
+    meta FLOAT NULL,
+    estado VARCHAR(50) NOT NULL DEFAULT 'ACTIVO' CHECK (estado IN ('ACTIVO', 'INACTIVO')),
+    fecha_ingreso DATE NULL,
+    fecha_salida DATE NULL
 );
 GO
 
 CREATE INDEX IX_asesor_dni ON asesor(dni);
 GO
 
-CREATE INDEX IX_asesor_nombres ON asesor(nombres);
+CREATE INDEX IX_asesor_nombre ON asesor(nombre);
 GO
 
-PRINT 'Tabla asesor creada exitosamente';
+CREATE INDEX IX_asesor_estado ON asesor(estado);
+GO
+
+-- Trigger para validar que si estado='ACTIVO', fecha_salida debe ser NULL
+CREATE TRIGGER trg_asesor_validar_fecha_salida
+ON asesor
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM inserted 
+        WHERE estado = 'ACTIVO' AND fecha_salida IS NOT NULL
+    )
+    BEGIN
+        RAISERROR('Si el estado es ACTIVO, la fecha de salida debe ser NULL', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
 GO
 
 -- Crear tabla asignacion_cliente (ahora relaciona cuenta con asesor)
@@ -130,18 +122,5 @@ GO
 CREATE INDEX IX_asignacion_fecha ON asignacion_cliente(fecha_pago);
 GO
 
-PRINT 'Tabla asignacion_cliente creada exitosamente';
-GO
-
-PRINT '';
-PRINT '============================================================';
 PRINT 'Todas las tablas han sido creadas exitosamente';
-PRINT '============================================================';
-PRINT 'Tablas creadas:';
-PRINT '  - cartera (id, nombre, tipo)';
-PRINT '  - cliente (id, dni, nombres, direccion)';
-PRINT '  - cuenta (id, id_cliente, numero_cuenta, id_cartera, capital, deuda_total, producto, sub_cartera, campana, fecha_castigo)';
-PRINT '  - asesor (id, dni, nombres)';
-PRINT '  - asignacion_cliente (id, id_cuenta, id_asesor, importe, fecha_pago, tipo_pago, voucher)';
-PRINT '============================================================';
 GO

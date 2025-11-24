@@ -41,7 +41,7 @@ router.post('/pagos', async (req, res) => {
         ac.fecha_pago,
         ac.tipo_pago,
         ac.voucher,
-        a.nombres as asesor_nombre,
+        a.nombre as asesor_nombre,
         a.dni as asesor_dni
       FROM asignacion_cliente ac
       INNER JOIN cuenta cu ON ac.id_cuenta = cu.id
@@ -124,7 +124,7 @@ router.post('/pagos/descargar', async (req, res) => {
         cu.deuda_total as 'Deuda Total',
         cu.fecha_castigo as 'Fecha Castigo',
         a.dni as 'DNI Asesor',
-        a.nombres as 'Nombre Asesor',
+        a.nombre as 'Nombre Asesor',
         ac.importe as 'Importe',
         ac.fecha_pago as 'Fecha Pago',
         ac.tipo_pago as 'Tipo Pago',
@@ -203,8 +203,8 @@ router.post('/ranking', async (req, res) => {
       queryAsesor += ' AND dni = @dni';
       requestAsesor.input('dni', sql.VarChar(8), dni);
     } else if (tipo === 'nombres' && nombres) {
-      queryAsesor += ' AND nombres LIKE @nombres';
-      requestAsesor.input('nombres', sql.VarChar, `%${nombres}%`);
+      queryAsesor += ' AND nombre LIKE @nombre';
+      requestAsesor.input('nombre', sql.VarChar, `%${nombres}%`);
     }
 
     const asesorResult = await requestAsesor.query(queryAsesor);
@@ -289,7 +289,7 @@ router.post('/cliente-asignacion/descargar', async (req, res) => {
         cu.deuda_total as 'Deuda Total',
         cu.fecha_castigo as 'Fecha Castigo',
         a.dni as 'DNI Asesor',
-        a.nombres as 'Nombre Asesor',
+        a.nombre as 'Nombre Asesor',
         ac.importe as 'Importe',
         ac.fecha_pago as 'Fecha Pago',
         ac.tipo_pago as 'Tipo Pago',

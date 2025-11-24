@@ -294,7 +294,7 @@ async function cargarAsesores() {
         asesores.forEach(asesor => {
             const option = document.createElement('option');
             option.value = asesor.id;
-            option.textContent = `${asesor.nombres} (${asesor.dni})`;
+            option.textContent = `${asesor.nombre} (${asesor.dni})`;
             select.appendChild(option);
         });
     } catch (error) {
@@ -485,9 +485,9 @@ document.getElementById('inputAsesor').addEventListener('input', async (e) => {
             const item = document.createElement('button');
             item.type = 'button';
             item.className = 'list-group-item list-group-item-action';
-            item.textContent = `${asesor.nombres} (${asesor.dni})`;
+            item.textContent = `${asesor.nombre} (${asesor.dni})`;
             item.addEventListener('click', () => {
-                document.getElementById('inputAsesor').value = asesor.nombres;
+                document.getElementById('inputAsesor').value = asesor.nombre;
                 document.getElementById('idAsesor').value = asesor.id;
                 list.classList.add('d-none');
             });

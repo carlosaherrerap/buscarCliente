@@ -299,47 +299,155 @@ router.post('/asesores', upload.single('archivo'), async (req, res) => {
       return res.status(400).json({ error: 'El archivo Excel está vacío' });
     }
 
-    // Validar campos requeridos
-    const camposRequeridos = ['dni', 'nombres'];
     const camposEncontrados = Object.keys(data[0]);
-    const camposFaltantes = camposRequeridos.filter(campo => 
-      !camposEncontrados.some(c => c.toLowerCase().includes(campo.toLowerCase()))
-    );
+    console.log('Campos encontrados en Excel:', camposEncontrados);
 
-    if (camposFaltantes.length > 0) {
+    // Función para buscar campo (case insensitive y con espacios)
+    const buscarCampo = (nombreBuscado) => {
+      return camposEncontrados.find(c => 
+        c.trim().toUpperCase().replace(/\s+/g, ' ') === nombreBuscado.toUpperCase().trim() ||
+        c.trim().toUpperCase().replace(/\s+/g, '') === nombreBuscado.toUpperCase().trim().replace(/\s+/g, '')
+      );
+    };
+
+    // Validar campos requeridos
+    const campoDNI = buscarCampo('DNI');
+    const campoNombre = buscarCampo('NOMBRE');
+
+    if (!campoDNI) {
       return res.status(400).json({ 
-        error: `No se encontraron los campos: ${camposFaltantes.join(', ')}` 
+        error: 'No se encontró el campo: DNI' 
       });
     }
+
+    if (!campoNombre) {
+      return res.status(400).json({ 
+        error: 'No se encontró el campo: NOMBRE' 
+      });
+    }
+
+    // Buscar campos opcionales
+    const campoCargo = buscarCampo('CARGO');
+    const campoMeta = buscarCampo('META');
+    const campoEstado = buscarCampo('ESTADO');
+    const campoFechaIngreso = buscarCampo('FECHA INGRESO');
+    const campoFechaSalida = buscarCampo('FECHA SALIDA');
+
+    console.log('Campos encontrados:');
+    console.log('  - DNI:', campoDNI || 'NO ENCONTRADO');
+    console.log('  - NOMBRE:', campoNombre || 'NO ENCONTRADO');
+    console.log('  - CARGO:', campoCargo || 'NO ENCONTRADO');
+    console.log('  - META:', campoMeta || 'NO ENCONTRADO');
+    console.log('  - ESTADO:', campoEstado || 'NO ENCONTRADO');
+    console.log('  - FECHA INGRESO:', campoFechaIngreso || 'NO ENCONTRADO');
+    console.log('  - FECHA SALIDA:', campoFechaSalida || 'NO ENCONTRADO');
 
     const pool = await getPool();
     const transaction = new sql.Transaction(pool);
 
     await transaction.begin();
+    console.log('✓ Transacción iniciada para importación de asesores');
 
     try {
+      let filaProcesada = 0;
       for (const row of data) {
-        const dni = row.dni || row.DNI || row.Dni || '';
-        const nombres = row.nombres || row.Nombres || row.NOMBRES || '';
+        filaProcesada++;
+        console.log(`\n--- Procesando fila ${filaProcesada} ---`);
 
-        if (!dni || !nombres) continue;
+        const dni = campoDNI && row[campoDNI] ? String(row[campoDNI]).trim() : '';
+        const nombre = campoNombre && row[campoNombre] ? String(row[campoNombre]).trim() : '';
+        const cargo = campoCargo && row[campoCargo] ? String(row[campoCargo]).trim() || null : null;
+        const meta = campoMeta && row[campoMeta] ? (parseFloat(String(row[campoMeta]).replace(/[^\d.-]/g, '')) || null) : null;
+        const estado = campoEstado && row[campoEstado] ? String(row[campoEstado]).trim().toUpperCase() : 'ACTIVO';
+        
+        // Validar que estado sea ACTIVO o INACTIVO
+        const estadoFinal = (estado === 'ACTIVO' || estado === 'INACTIVO') ? estado : 'ACTIVO';
+
+        // Manejar fecha_ingreso
+        let fecha_ingreso = null;
+        if (campoFechaIngreso && row[campoFechaIngreso]) {
+          const fechaValue = row[campoFechaIngreso];
+          if (fechaValue instanceof Date) {
+            fecha_ingreso = fechaValue;
+          } else if (typeof fechaValue === 'string' && fechaValue.trim()) {
+            const fechaParsed = new Date(fechaValue);
+            if (!isNaN(fechaParsed.getTime())) {
+              fecha_ingreso = fechaParsed;
+            }
+          } else if (typeof fechaValue === 'number') {
+            fecha_ingreso = new Date((fechaValue - 25569) * 86400 * 1000);
+          }
+        }
+
+        // Manejar fecha_salida (debe ser NULL si estado es ACTIVO)
+        let fecha_salida = null;
+        if (estadoFinal === 'INACTIVO' && campoFechaSalida && row[campoFechaSalida]) {
+          const fechaValue = row[campoFechaSalida];
+          if (fechaValue instanceof Date) {
+            fecha_salida = fechaValue;
+          } else if (typeof fechaValue === 'string' && fechaValue.trim()) {
+            const fechaParsed = new Date(fechaValue);
+            if (!isNaN(fechaParsed.getTime())) {
+              fecha_salida = fechaParsed;
+            }
+          } else if (typeof fechaValue === 'number') {
+            fecha_salida = new Date((fechaValue - 25569) * 86400 * 1000);
+          }
+        }
+        // Si estado es ACTIVO, forzar fecha_salida a NULL
+        if (estadoFinal === 'ACTIVO') {
+          fecha_salida = null;
+        }
+
+        console.log('Valores extraídos:');
+        console.log(`  - dni: ${dni}`);
+        console.log(`  - nombre: ${nombre}`);
+        console.log(`  - cargo: ${cargo || 'NULL'}`);
+        console.log(`  - meta: ${meta || 'NULL'}`);
+        console.log(`  - estado: ${estadoFinal}`);
+        console.log(`  - fecha_ingreso: ${fecha_ingreso || 'NULL'}`);
+        console.log(`  - fecha_salida: ${fecha_salida || 'NULL'}`);
+
+        if (!dni || !nombre) {
+          console.log('⚠️  Fila omitida: DNI o nombre vacíos');
+          continue;
+        }
 
         const request = new sql.Request(transaction);
         await request
           .input('dni', sql.VarChar(8), dni.toString().substring(0, 8))
-          .input('nombres', sql.VarChar, nombres)
+          .input('nombre', sql.VarChar, nombre)
+          .input('cargo', sql.VarChar, cargo || null)
+          .input('meta', sql.Float, meta || null)
+          .input('estado', sql.VarChar, estadoFinal)
+          .input('fecha_ingreso', sql.Date, fecha_ingreso || null)
+          .input('fecha_salida', sql.Date, fecha_salida || null)
           .query(`
             IF NOT EXISTS (SELECT 1 FROM asesor WHERE dni = @dni)
             BEGIN
-              INSERT INTO asesor (dni, nombres)
-              VALUES (@dni, @nombres)
+              INSERT INTO asesor (dni, nombre, cargo, meta, estado, fecha_ingreso, fecha_salida)
+              VALUES (@dni, @nombre, @cargo, @meta, @estado, @fecha_ingreso, @fecha_salida)
+            END
+            ELSE
+            BEGIN
+              UPDATE asesor 
+              SET nombre = @nombre,
+                  cargo = @cargo,
+                  meta = @meta,
+                  estado = @estado,
+                  fecha_ingreso = @fecha_ingreso,
+                  fecha_salida = @fecha_salida
+              WHERE dni = @dni
             END
           `);
+        console.log(`✓ Asesor ${dni} procesado correctamente`);
       }
 
       await transaction.commit();
+      console.log('✅ Transacción confirmada exitosamente');
       res.json({ success: true, message: 'Importación exitosa', registros: data.length });
     } catch (error) {
+      console.error('❌ ERROR EN LA TRANSACCIÓN:', error);
       await transaction.rollback();
       throw error;
     }
