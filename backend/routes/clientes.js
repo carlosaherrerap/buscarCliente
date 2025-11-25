@@ -128,29 +128,63 @@ router.get('/campanas/lista', async (req, res) => {
   }
 });
 
-// Obtener cuentas de un cliente
-router.get('/:id_cliente/cuentas', async (req, res) => {
+// Obtener carteras de un cliente (únicas)
+router.get('/:id_cliente/carteras', async (req, res) => {
   try {
     const pool = await getPool();
     const result = await pool.request()
       .input('id_cliente', sql.Int, req.params.id_cliente)
       .query(`
-        SELECT 
-          cu.id,
-          cu.numero_cuenta,
-          cu.capital,
-          cu.deuda_total,
-          cu.producto,
-          cu.sub_cartera,
-          cu.campana,
-          cu.fecha_castigo,
-          ca.nombre as cartera_nombre,
-          ca.tipo as cartera_tipo
+        SELECT DISTINCT
+          ca.id,
+          ca.nombre,
+          ca.tipo
         FROM cuenta cu
         INNER JOIN cartera ca ON cu.id_cartera = ca.id
         WHERE cu.id_cliente = @id_cliente
-        ORDER BY cu.numero_cuenta
+        ORDER BY ca.nombre
       `);
+    res.json(result.recordset);
+  } catch (error) {
+    console.error('Error al obtener carteras del cliente:', error);
+    res.status(500).json({ error: 'Error al obtener carteras', message: error.message });
+  }
+});
+
+// Obtener cuentas de un cliente (opcionalmente filtradas por cartera)
+router.get('/:id_cliente/cuentas', async (req, res) => {
+  try {
+    const { id_cartera } = req.query;
+    const pool = await getPool();
+    let query = `
+      SELECT 
+        cu.id,
+        cu.numero_cuenta,
+        cu.capital,
+        cu.deuda_total,
+        cu.producto,
+        cu.sub_cartera,
+        cu.campana,
+        cu.fecha_castigo,
+        cu.id_cartera,
+        ca.nombre as cartera_nombre,
+        ca.tipo as cartera_tipo
+      FROM cuenta cu
+      INNER JOIN cartera ca ON cu.id_cartera = ca.id
+      WHERE cu.id_cliente = @id_cliente
+    `;
+    
+    const request = pool.request()
+      .input('id_cliente', sql.Int, req.params.id_cliente);
+    
+    if (id_cartera) {
+      query += ' AND cu.id_cartera = @id_cartera';
+      request.input('id_cartera', sql.Int, id_cartera);
+    }
+    
+    query += ' ORDER BY cu.numero_cuenta';
+    
+    const result = await request.query(query);
     res.json(result.recordset);
   } catch (error) {
     console.error('Error al obtener cuentas:', error);

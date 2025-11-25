@@ -77,6 +77,9 @@ async function buscarCliente() {
     }
 }
 
+// Variable global para almacenar las cuentas del cliente
+let todasLasCuentasCliente = [];
+
 async function mostrarCliente(cliente) {
     document.getElementById('clienteId').value = cliente.id;
     document.getElementById('clienteDNI').value = cliente.dni || '';
@@ -86,47 +89,114 @@ async function mostrarCliente(cliente) {
     document.getElementById('modalDNI').textContent = cliente.dni || '-';
     document.getElementById('modalDireccion').textContent = cliente.direccion || '-';
     
-    // Cargar cuentas del cliente para el spinner
-    await cargarCuentasCliente(cliente.id);
+    // Limpiar spinners
+    document.getElementById('clienteCarteraSelect').innerHTML = '<option value="">Seleccionar cartera</option>';
+    document.getElementById('clienteCuenta').innerHTML = '<option value="">Seleccionar cuenta</option>';
     
-    // Si hay cuentas, mostrar la primera por defecto
-    if (cliente.cuentas && cliente.cuentas.length > 0) {
-        mostrarCuentaSeleccionada(cliente.cuentas[0]);
-    }
+    // Limpiar campos
+    limpiarCamposCuenta();
+    
+    // Cargar carteras del cliente primero
+    await cargarCarterasCliente(cliente.id);
+    
+    // Cargar todas las cuentas del cliente
+    await cargarTodasLasCuentasCliente(cliente.id);
     
     showPage('cliente-page');
 }
 
-async function cargarCuentasCliente(idCliente) {
+async function cargarCarterasCliente(idCliente) {
     try {
-        const response = await fetch(`${API_URL}/clientes/${idCliente}/cuentas`);
-        const cuentas = await response.json();
+        const response = await fetch(`${API_URL}/clientes/${idCliente}/carteras`);
+        const carteras = await response.json();
         
-        const select = document.getElementById('clienteCuenta');
-        select.innerHTML = '<option value="">Seleccionar cuenta</option>';
+        const select = document.getElementById('clienteCarteraSelect');
+        select.innerHTML = '<option value="">Seleccionar cartera</option>';
         
-        cuentas.forEach((cuenta) => {
+        carteras.forEach((cartera) => {
             const option = document.createElement('option');
-            option.value = cuenta.id;
-            option.textContent = cuenta.numero_cuenta;
-            option.dataset.cuenta = JSON.stringify(cuenta);
+            option.value = cartera.id;
+            option.textContent = `${cartera.nombre} (${cartera.tipo})`;
+            option.dataset.cartera = JSON.stringify(cartera);
             select.appendChild(option);
         });
         
-        // Agregar listener para cuando se seleccione una cuenta
+        // Agregar listener para cuando se seleccione una cartera
         select.addEventListener('change', (e) => {
-            if (e.target.value) {
-                const cuenta = JSON.parse(e.target.selectedOptions[0].dataset.cuenta);
-                mostrarCuentaSeleccionada(cuenta);
+            const idCartera = e.target.value;
+            if (idCartera) {
+                filtrarCuentasPorCartera(idCartera);
+            } else {
+                // Si no hay cartera seleccionada, mostrar todas las cuentas
+                mostrarTodasLasCuentas();
             }
         });
+    } catch (error) {
+        console.error('Error al cargar carteras:', error);
+    }
+}
+
+async function cargarTodasLasCuentasCliente(idCliente) {
+    try {
+        const response = await fetch(`${API_URL}/clientes/${idCliente}/cuentas`);
+        todasLasCuentasCliente = await response.json();
+        
+        // Si no hay cartera seleccionada, mostrar todas las cuentas
+        const carteraSeleccionada = document.getElementById('clienteCarteraSelect').value;
+        if (!carteraSeleccionada) {
+            mostrarTodasLasCuentas();
+        } else {
+            filtrarCuentasPorCartera(carteraSeleccionada);
+        }
     } catch (error) {
         console.error('Error al cargar cuentas:', error);
     }
 }
 
+function mostrarTodasLasCuentas() {
+    const select = document.getElementById('clienteCuenta');
+    select.innerHTML = '<option value="">Seleccionar cuenta</option>';
+    
+    todasLasCuentasCliente.forEach((cuenta) => {
+        const option = document.createElement('option');
+        option.value = cuenta.id;
+        option.textContent = cuenta.numero_cuenta;
+        option.dataset.cuenta = JSON.stringify(cuenta);
+        select.appendChild(option);
+    });
+    
+    // Limpiar campos cuando se muestran todas las cuentas sin selección
+    limpiarCamposCuenta();
+}
+
+function filtrarCuentasPorCartera(idCartera) {
+    const select = document.getElementById('clienteCuenta');
+    select.innerHTML = '<option value="">Seleccionar cuenta</option>';
+    
+    const cuentasFiltradas = todasLasCuentasCliente.filter(cuenta => cuenta.id_cartera == idCartera);
+    
+    cuentasFiltradas.forEach((cuenta) => {
+        const option = document.createElement('option');
+        option.value = cuenta.id;
+        option.textContent = cuenta.numero_cuenta;
+        option.dataset.cuenta = JSON.stringify(cuenta);
+        select.appendChild(option);
+    });
+    
+    // Limpiar campos cuando se filtra por cartera
+    limpiarCamposCuenta();
+}
+
+function limpiarCamposCuenta() {
+    document.getElementById('clienteSubCartera').value = '';
+    document.getElementById('clienteProducto').value = '';
+    document.getElementById('clienteCapital').value = '';
+    document.getElementById('clienteDeudaTotal').value = '';
+    document.getElementById('clienteCampana').value = '';
+    document.getElementById('clienteFechaCastigo').value = '';
+}
+
 function mostrarCuentaSeleccionada(cuenta) {
-    document.getElementById('clienteCartera').value = cuenta.cartera_nombre || '';
     document.getElementById('clienteSubCartera').value = cuenta.sub_cartera || '';
     document.getElementById('clienteProducto').value = cuenta.producto || '';
     document.getElementById('clienteCapital').value = cuenta.capital || '0.00';
@@ -134,6 +204,21 @@ function mostrarCuentaSeleccionada(cuenta) {
     document.getElementById('clienteCampana').value = cuenta.campana || '';
     document.getElementById('clienteFechaCastigo').value = cuenta.fecha_castigo || '';
 }
+
+// Agregar listener al spinner de cuentas (solo una vez, al cargar la página)
+document.addEventListener('DOMContentLoaded', () => {
+    const selectCuenta = document.getElementById('clienteCuenta');
+    if (selectCuenta) {
+        selectCuenta.addEventListener('change', (e) => {
+            if (e.target.value) {
+                const cuenta = JSON.parse(e.target.selectedOptions[0].dataset.cuenta);
+                mostrarCuentaSeleccionada(cuenta);
+            } else {
+                limpiarCamposCuenta();
+            }
+        });
+    }
+});
 
 
 // ========== VISTA DE IMPORTAR ==========
