@@ -1,5 +1,34 @@
 const API_URL = window.location.origin + '/api';
 
+// Funciones de formateo
+function formatearFecha(fecha) {
+    if (!fecha) return '';
+    // Si es una fecha ISO string, extraer solo la parte de fecha
+    if (typeof fecha === 'string' && fecha.includes('T')) {
+        return fecha.split('T')[0];
+    }
+    // Si es un objeto Date, formatear
+    if (fecha instanceof Date) {
+        return fecha.toISOString().split('T')[0];
+    }
+    // Si ya está en formato YYYY-MM-DD, devolverlo
+    return fecha;
+}
+
+function formatearNumero(numero) {
+    if (numero === null || numero === undefined || numero === '') return '';
+    // Convertir a número
+    const num = parseFloat(numero);
+    if (isNaN(num)) return numero;
+    // Detectar cuántos decimales tiene el número original
+    const str = numero.toString();
+    if (str.includes('.')) {
+        const decimales = str.split('.')[1].length;
+        return num.toFixed(decimales);
+    }
+    return num.toString();
+}
+
 // Navegación entre páginas
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(page => {
@@ -81,13 +110,16 @@ async function buscarCliente() {
 let todasLasCuentasCliente = [];
 
 async function mostrarCliente(cliente) {
-    document.getElementById('clienteId').value = cliente.id;
-    document.getElementById('clienteDNI').value = cliente.dni || '';
+    // Guardar ID para uso interno (no mostrar en pantalla)
+    window.currentClienteId = cliente.id;
+    
+    // Mostrar solo el nombre
     document.getElementById('clienteNombre').textContent = cliente.nombres || '-';
     
     // Guardar datos para modal
     document.getElementById('modalDNI').textContent = cliente.dni || '-';
     document.getElementById('modalDireccion').textContent = cliente.direccion || '-';
+    document.getElementById('modalId').textContent = cliente.id || '-';
     
     // Limpiar spinners
     document.getElementById('clienteCarteraSelect').innerHTML = '<option value="">Seleccionar cartera</option>';
@@ -105,6 +137,9 @@ async function mostrarCliente(cliente) {
     showPage('cliente-page');
 }
 
+// Variable para evitar múltiples listeners
+let carteraListenerAgregado = false;
+
 async function cargarCarterasCliente(idCliente) {
     try {
         const response = await fetch(`${API_URL}/clientes/${idCliente}/carteras`);
@@ -121,16 +156,19 @@ async function cargarCarterasCliente(idCliente) {
             select.appendChild(option);
         });
         
-        // Agregar listener para cuando se seleccione una cartera
-        select.addEventListener('change', (e) => {
-            const idCartera = e.target.value;
-            if (idCartera) {
-                filtrarCuentasPorCartera(idCartera);
-            } else {
-                // Si no hay cartera seleccionada, mostrar todas las cuentas
-                mostrarTodasLasCuentas();
-            }
-        });
+        // Agregar listener solo una vez
+        if (!carteraListenerAgregado) {
+            select.addEventListener('change', (e) => {
+                const idCartera = e.target.value;
+                if (idCartera) {
+                    filtrarCuentasPorCartera(idCartera);
+                } else {
+                    // Si no hay cartera seleccionada, mostrar todas las cuentas
+                    mostrarTodasLasCuentas();
+                }
+            });
+            carteraListenerAgregado = true;
+        }
     } catch (error) {
         console.error('Error al cargar carteras:', error);
     }
@@ -199,10 +237,10 @@ function limpiarCamposCuenta() {
 function mostrarCuentaSeleccionada(cuenta) {
     document.getElementById('clienteSubCartera').value = cuenta.sub_cartera || '';
     document.getElementById('clienteProducto').value = cuenta.producto || '';
-    document.getElementById('clienteCapital').value = cuenta.capital || '0.00';
-    document.getElementById('clienteDeudaTotal').value = cuenta.deuda_total || '0.00';
+    document.getElementById('clienteCapital').value = formatearNumero(cuenta.capital) || '0.00';
+    document.getElementById('clienteDeudaTotal').value = formatearNumero(cuenta.deuda_total) || '0.00';
     document.getElementById('clienteCampana').value = cuenta.campana || '';
-    document.getElementById('clienteFechaCastigo').value = cuenta.fecha_castigo || '';
+    document.getElementById('clienteFechaCastigo').value = formatearFecha(cuenta.fecha_castigo) || '';
 }
 
 // Agregar listener al spinner de cuentas (solo una vez, al cargar la página)
@@ -518,7 +556,12 @@ document.getElementById('btnVerInfoPersonal').addEventListener('click', () => {
 });
 
 document.getElementById('btnDescargarCliente').addEventListener('click', async () => {
-    const idCliente = document.getElementById('clienteId').value;
+    const idCliente = window.currentClienteId;
+    
+    if (!idCliente) {
+        showModal('Error', 'No hay cliente seleccionado', 'error');
+        return;
+    }
     
     try {
         const response = await fetch(`${API_URL}/reportes/cliente-asignacion/descargar`, {
@@ -636,8 +679,9 @@ document.getElementById('formAsignar').addEventListener('submit', async (e) => {
             showModal('Éxito', 'Asignación guardada correctamente');
             document.getElementById('formAsignar').reset();
             document.getElementById('idAsesor').value = '';
-            const idCliente = document.getElementById('clienteId').value;
-            await cargarCuentasCliente(idCliente);
+            document.getElementById('inputAsesor').value = '';
+            // Mostrar botón de descargar después de guardar
+            document.getElementById('btnDescargarCliente').style.display = 'inline-block';
         } else {
             showModal('Error', data.error || 'Error al guardar asignación', 'error');
         }

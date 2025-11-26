@@ -148,6 +148,36 @@ body {
     border-radius: 15px 15px 0 0;
 }
 
+/* Mejoras de diseño para vista de cliente */
+.card.bg-light {
+    border-left: 4px solid #0d6efd;
+}
+
+.form-label.fw-bold {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-select-lg {
+    font-size: 1rem;
+    padding: 0.75rem;
+}
+
+/* Campos readonly con mejor estilo */
+.form-control[readonly] {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    cursor: default;
+}
+
+/* Sección de asignar */
+#formAsignar {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .left-section {

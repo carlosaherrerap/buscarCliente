@@ -379,13 +379,13 @@
                     <!-- Información básica -->
                     <div class="row mb-4">
                         <div class="col-md-8">
-                            <h4 id="clienteNombre">-</h4>
+                            <h4 class="mb-3" id="clienteNombre">-</h4>
                             <button class="btn btn-outline-info btn-sm" id="btnVerInfoPersonal">
                                 <i class="bi bi-person-eye"></i> Ver Información Personal
                             </button>
                         </div>
                         <div class="col-md-4 text-end">
-                            <button class="btn btn-success btn-sm" id="btnDescargarCliente">
+                            <button class="btn btn-success btn-sm d-none" id="btnDescargarCliente">
                                 <i class="bi bi-download"></i> Descargar Excel
                             </button>
                         </div>
@@ -393,57 +393,58 @@
                     
                     <hr>
                     
-                    <!-- Datos del cliente -->
+                    <!-- Selectores de Cartera y Cuenta -->
                     <div class="row mb-4">
-                        <div class="col-md-3">
-                            <label class="form-label">ID</label>
-                            <input type="text" class="form-control" id="clienteId" readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">DNI</label>
-                            <input type="text" class="form-control" id="clienteDNI" readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Cartera</label>
-                            <select class="form-select" id="clienteCarteraSelect">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-folder"></i> Cartera
+                            </label>
+                            <select class="form-select form-select-lg" id="clienteCarteraSelect">
                                 <option value="">Seleccionar cartera</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Número de Cuenta</label>
-                            <select class="form-select" id="clienteCuenta">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-credit-card"></i> Número de Cuenta
+                            </label>
+                            <select class="form-select form-select-lg" id="clienteCuenta">
                                 <option value="">Seleccionar cuenta</option>
                             </select>
                         </div>
                     </div>
                     
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <label class="form-label">Sub Cartera</label>
-                            <input type="text" class="form-control" id="clienteSubCartera" readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Producto</label>
-                            <input type="text" class="form-control" id="clienteProducto" readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Capital</label>
-                            <input type="text" class="form-control" id="clienteCapital" readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Deuda Total</label>
-                            <input type="text" class="form-control" id="clienteDeudaTotal" readonly>
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <label class="form-label">Campaña</label>
-                            <input type="text" class="form-control" id="clienteCampana" readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Fecha Castigo</label>
-                            <input type="text" class="form-control" id="clienteFechaCastigo" readonly>
+                    <!-- Información de la cuenta seleccionada -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">
+                                <i class="bi bi-info-circle"></i> Información de la Cuenta
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label text-muted small">Sub Cartera</label>
+                                    <input type="text" class="form-control" id="clienteSubCartera" readonly>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label text-muted small">Producto</label>
+                                    <input type="text" class="form-control" id="clienteProducto" readonly>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label text-muted small">Capital</label>
+                                    <input type="text" class="form-control" id="clienteCapital" readonly>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label text-muted small">Deuda Total</label>
+                                    <input type="text" class="form-control" id="clienteDeudaTotal" readonly>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label text-muted small">Campaña</label>
+                                    <input type="text" class="form-control" id="clienteCampana" readonly>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label text-muted small">Fecha Castigo</label>
+                                    <input type="text" class="form-control" id="clienteFechaCastigo" readonly>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -470,11 +471,10 @@
                                 <label class="form-label">Tipo de Pago</label>
                                 <select class="form-select" id="tipoPago" required>
                                     <option value="">Seleccionar...</option>
-                                    <option value="Efectivo">Efectivo</option>
-                                    <option value="Transferencia">Transferencia</option>
-                                    <option value="Depósito">Depósito</option>
-                                    <option value="Tarjeta">Tarjeta</option>
-                                    <option value="Otro">Otro</option>
+                                    <option value="PARCIAL">PARCIAL</option>
+                                    <option value="CONVENIO">CONVENIO</option>
+                                    <option value="POLITICA">POLITICA</option>
+                                    <option value="EXCEPCION">EXCEPCION</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -526,8 +526,18 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>DNI:</strong> <span id="modalDNI">-</span></p>
-                    <p><strong>Dirección:</strong> <span id="modalDireccion">-</span></p>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">ID</label>
+                        <p class="fw-bold" id="modalId">-</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">DNI</label>
+                        <p class="fw-bold" id="modalDNI">-</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Dirección</label>
+                        <p class="fw-bold" id="modalDireccion">-</p>
+                    </div>
                 </div>
             </div>
         </div>
