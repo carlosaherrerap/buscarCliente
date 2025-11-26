@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const XLSX = require('xlsx');
+const ExcelJS = require('exceljs');
 const { getPool, sql } = require('../config/database');
 const path = require('path');
 const fs = require('fs');
@@ -170,52 +171,123 @@ router.post('/pagos/descargar', async (req, res) => {
 
     const result = await request.query(query);
     
-    // Procesar los datos para agregar URLs en la columna VOUCHER
-    const processedData = result.recordset.map(row => {
-      const processedRow = { ...row };
-      // Si hay voucher, crear una URL completa al servidor
-      if (processedRow.VOUCHER && processedRow.VOUCHER.trim() !== '') {
-        // Extraer solo el nombre del archivo de la ruta (puede ser "uploads/archivo.pdf" o solo "archivo.pdf")
-        let fileName = processedRow.VOUCHER;
+    // Crear workbook con ExcelJS para poder usar hipervínculos
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Pagos');
+    
+    // Definir columnas con anchos
+    worksheet.columns = [
+      { header: 'DNI', key: 'DNI', width: 12 },
+      { header: 'NOMBRES COMPLETOS', key: 'NOMBRES COMPLETOS', width: 25 },
+      { header: 'CUENTA', key: 'CUENTA', width: 15 },
+      { header: 'CAMPAÑA', key: 'CAMPAÑA', width: 15 },
+      { header: 'CARTERA', key: 'CARTERA', width: 15 },
+      { header: 'ID CARTERA', key: 'ID CARTERA', width: 12 },
+      { header: 'SUB CARTERA', key: 'SUB CARTERA', width: 15 },
+      { header: 'PRODUCTO', key: 'PRODUCTO', width: 15 },
+      { header: 'CAPITAL', key: 'CAPITAL', width: 12 },
+      { header: 'DEUDA TOTAL', key: 'DEUDA TOTAL', width: 12 },
+      { header: 'FECHA CASTIGO', key: 'FECHA CASTIGO', width: 15 },
+      { header: 'DNI ASESOR', key: 'DNI ASESOR', width: 12 },
+      { header: 'NOMBRE ASESOR', key: 'NOMBRE ASESOR', width: 20 },
+      { header: 'IMPORTE', key: 'IMPORTE', width: 12 },
+      { header: 'FECHA PAGO', key: 'FECHA PAGO', width: 12 },
+      { header: 'TIPO PAGO', key: 'TIPO PAGO', width: 12 },
+      { header: 'VOUCHER', key: 'VOUCHER', width: 15 }
+    ];
+    
+    // Estilo para el encabezado
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' }
+    };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+    
+    // Procesar cada fila de datos
+    result.recordset.forEach((row, index) => {
+      const rowNumber = index + 2; // +2 porque la fila 1 es el encabezado
+      const excelRow = worksheet.addRow({
+        'DNI': row.DNI,
+        'NOMBRES COMPLETOS': row['NOMBRES COMPLETOS'],
+        'CUENTA': row.CUENTA,
+        'CAMPAÑA': row.CAMPAÑA,
+        'CARTERA': row.CARTERA,
+        'ID CARTERA': row['ID CARTERA'],
+        'SUB CARTERA': row['SUB CARTERA'],
+        'PRODUCTO': row.PRODUCTO,
+        'CAPITAL': row.CAPITAL,
+        'DEUDA TOTAL': row['DEUDA TOTAL'],
+        'FECHA CASTIGO': row['FECHA CASTIGO'] ? new Date(row['FECHA CASTIGO']) : null,
+        'DNI ASESOR': row['DNI ASESOR'],
+        'NOMBRE ASESOR': row['NOMBRE ASESOR'],
+        'IMPORTE': row.IMPORTE,
+        'FECHA PAGO': row['FECHA PAGO'] ? new Date(row['FECHA PAGO']) : null,
+        'TIPO PAGO': row['TIPO PAGO'],
+        'VOUCHER': '' // Se llenará con el hipervínculo
+      });
+      
+      // Formatear fechas
+      const fechaCastigoCell = excelRow.getCell('FECHA CASTIGO');
+      if (fechaCastigoCell.value) {
+        fechaCastigoCell.numFmt = 'dd/mm/yyyy';
+      }
+      
+      const fechaPagoCell = excelRow.getCell('FECHA PAGO');
+      if (fechaPagoCell.value) {
+        fechaPagoCell.numFmt = 'dd/mm/yyyy';
+      }
+      
+      // Formatear números
+      excelRow.getCell('CAPITAL').numFmt = '#,##0.00';
+      excelRow.getCell('DEUDA TOTAL').numFmt = '#,##0.00';
+      excelRow.getCell('IMPORTE').numFmt = '#,##0.00';
+      
+      // Agregar botón "MOSTRAR" con hipervínculo en la columna VOUCHER
+      const voucherCell = excelRow.getCell('VOUCHER');
+      if (row.VOUCHER && row.VOUCHER.trim() !== '') {
+        // Extraer solo el nombre del archivo
+        let fileName = row.VOUCHER;
         if (fileName.includes('/')) {
           fileName = fileName.split('/').pop();
         }
-        // Crear URL completa para acceder al voucher (página HTML que muestra el voucher)
-        const voucherUrl = `${baseUrl}/voucher.html?file=${encodeURIComponent(fileName)}`;
-        processedRow.VOUCHER = voucherUrl;
+        // Crear URL completa
+        const voucherUrl = `${baseUrl}/api/reportes/voucher/${encodeURIComponent(fileName)}`;
+        
+        // Crear hipervínculo con fórmula HYPERLINK
+        voucherCell.value = { formula: `HYPERLINK("${voucherUrl}","MOSTRAR")` };
+        
+        // Estilo del botón
+        voucherCell.font = { 
+          color: { argb: 'FFFFFFFF' }, 
+          bold: true,
+          underline: true
+        };
+        voucherCell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF0070C0' } // Azul
+        };
+        voucherCell.alignment = { 
+          vertical: 'middle', 
+          horizontal: 'center' 
+        };
+        voucherCell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      } else {
+        voucherCell.value = '-';
+        voucherCell.alignment = { horizontal: 'center' };
       }
-      return processedRow;
     });
     
-    // Convertir a Excel
-    const worksheet = XLSX.utils.json_to_sheet(processedData);
-    
-    // Agregar ancho de columnas para mejor visualización
-    const colWidths = [
-      { wch: 12 }, // DNI
-      { wch: 25 }, // NOMBRES COMPLETOS
-      { wch: 15 }, // CUENTA
-      { wch: 15 }, // CAMPAÑA
-      { wch: 15 }, // CARTERA
-      { wch: 12 }, // ID CARTERA
-      { wch: 15 }, // SUB CARTERA
-      { wch: 15 }, // PRODUCTO
-      { wch: 12 }, // CAPITAL
-      { wch: 12 }, // DEUDA TOTAL
-      { wch: 15 }, // FECHA CASTIGO
-      { wch: 12 }, // DNI ASESOR
-      { wch: 20 }, // NOMBRE ASESOR
-      { wch: 12 }, // IMPORTE
-      { wch: 12 }, // FECHA PAGO
-      { wch: 12 }, // TIPO PAGO
-      { wch: 50 }  // VOUCHER (URL larga)
-    ];
-    worksheet['!cols'] = colWidths;
-    
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Pagos');
-    
-    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    // Generar buffer
+    const buffer = await workbook.xlsx.writeBuffer();
     
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename=pagos.xlsx');

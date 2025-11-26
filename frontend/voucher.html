@@ -87,20 +87,28 @@
         const btnDownload = document.getElementById('btnDownload');
         
         if (isPDF) {
-            // Mostrar PDF
+            // Mostrar PDF completo en el navegador
             loading.style.display = 'none';
             content.style.display = 'block';
-            content.innerHTML = `<iframe id="voucherPDF" src="${voucherUrl}"></iframe>`;
+            content.innerHTML = `<iframe id="voucherPDF" src="${voucherUrl}" style="width: 100%; height: 90vh; border: none;"></iframe>`;
             btnDownload.href = voucherUrl;
             btnDownload.style.display = 'inline-block';
         } else if (isImage) {
-            // Mostrar imagen
+            // Mostrar imagen completa en el navegador
             loading.style.display = 'none';
             content.style.display = 'block';
             const img = document.createElement('img');
             img.id = 'voucherImage';
             img.src = voucherUrl;
             img.alt = 'Voucher';
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.style.display = 'block';
+            img.style.margin = '0 auto';
+            img.onload = () => {
+                // Asegurar que la imagen se vea completa
+                img.style.maxHeight = '90vh';
+            };
             img.onerror = () => {
                 content.style.display = 'none';
                 error.style.display = 'block';
