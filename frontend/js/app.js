@@ -65,8 +65,9 @@ document.getElementById('searchInput').addEventListener('keypress', (e) => {
 document.getElementById('importBtn').addEventListener('click', () => showPage('import-page'));
 document.getElementById('pagosBtn').addEventListener('click', () => {
     cargarCarteras();
-    cargarCampanas();
     cargarAsesores();
+    // Deshabilitar botón de descargar al entrar
+    document.getElementById('btnDescargarPagos').disabled = true;
     showPage('pagos-page');
 });
 document.getElementById('rankingBtn').addEventListener('click', () => showPage('ranking-page'));
@@ -389,22 +390,46 @@ async function cargarCarteras() {
     }
 }
 
-async function cargarCampanas() {
-    try {
-        const response = await fetch(`${API_URL}/clientes/campanas/lista`);
-        const campanas = await response.json();
-        
-        const select = document.getElementById('spinnerCampana');
-        select.innerHTML = '<option value="">Todas las campañas</option>';
-        campanas.forEach(campana => {
-            const option = document.createElement('option');
-            option.value = campana;
-            option.textContent = campana;
-            select.appendChild(option);
-        });
-    } catch (error) {
-        console.error('Error al cargar campañas:', error);
+// Función para abrir modal de voucher
+function abrirModalVoucher(voucherUrl) {
+    const modal = new bootstrap.Modal(document.getElementById('modalVoucher'));
+    const content = document.getElementById('voucherContent');
+    const btnDescargar = document.getElementById('btnDescargarVoucher');
+    
+    // Limpiar contenido anterior
+    content.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-3">Cargando archivo...</p></div>';
+    btnDescargar.style.display = 'none';
+    
+    // Detectar tipo de archivo
+    const extension = voucherUrl.split('.').pop().toLowerCase();
+    const isPDF = extension === 'pdf';
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+    
+    if (isPDF) {
+        // Mostrar PDF
+        content.innerHTML = `<iframe src="${voucherUrl}" style="width: 100%; height: 600px; border: none;"></iframe>`;
+        btnDescargar.href = voucherUrl;
+        btnDescargar.style.display = 'inline-block';
+    } else if (isImage) {
+        // Mostrar imagen
+        content.innerHTML = `<img src="${voucherUrl}" class="img-fluid" alt="Voucher" style="max-height: 600px; width: auto;">`;
+        btnDescargar.href = voucherUrl;
+        btnDescargar.style.display = 'inline-block';
+    } else {
+        // Archivo no soportado
+        content.innerHTML = `
+            <div class="text-center p-5">
+                <i class="bi bi-file-earmark-x display-1 text-warning"></i>
+                <h5 class="mt-3">Tipo de archivo no soportado</h5>
+                <p class="text-muted">Solo se pueden visualizar PDFs e imágenes</p>
+                <a href="${voucherUrl}" download class="btn btn-primary mt-3">
+                    <i class="bi bi-download"></i> Descargar archivo
+                </a>
+            </div>
+        `;
     }
+    
+    modal.show();
 }
 
 async function cargarAsesores() {
@@ -437,6 +462,9 @@ document.getElementById('btnAplicarFiltros').addEventListener('click', async () 
         
         const data = await response.json();
         document.getElementById('totalRegistros').textContent = data.length;
+        
+        // Habilitar botón de descargar después de aplicar filtros
+        document.getElementById('btnDescargarPagos').disabled = false;
     } catch (error) {
         console.error('Error:', error);
         showModal('Error', 'Error al aplicar filtros: ' + error.message, 'error');
@@ -477,10 +505,8 @@ function obtenerFiltrosPagos() {
         fecha_inicio: document.getElementById('fechaInicio').value,
         fecha_fin: document.getElementById('fechaFin').value,
         cartera: document.getElementById('spinnerCartera').value,
-        campana: document.getElementById('spinnerCampana').value,
         id_asesor: document.getElementById('spinnerAsesor').value,
         filtro_cartera: document.getElementById('checkCartera').checked,
-        filtro_campana: document.getElementById('checkCampana').checked,
         filtro_asesor: document.getElementById('checkAsesor').checked
     };
 }
