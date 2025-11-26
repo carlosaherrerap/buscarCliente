@@ -23,9 +23,17 @@ if (!fs.existsSync(frontendPath)) {
 }
 
 // Servir archivos de uploads
-const uploadsPath = path.join(__dirname, '../uploads');
+// En Docker: /app/uploads, en desarrollo: ../uploads
+const isDocker = process.env.DOCKER === 'true' || fs.existsSync('/.dockerenv');
+const uploadsPath = isDocker 
+  ? path.join(__dirname, './uploads')  // En Docker: /app/uploads
+  : path.join(__dirname, '../uploads'); // En desarrollo: raíz del proyecto
+
 if (fs.existsSync(uploadsPath)) {
   app.use('/uploads', express.static(uploadsPath));
+  console.log('Serviendo archivos estáticos desde:', uploadsPath);
+} else {
+  console.log('Advertencia: Directorio de uploads no encontrado:', uploadsPath);
 }
 
 // Rutas

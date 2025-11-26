@@ -16,6 +16,9 @@ services:
       - DB_ENCRYPT=${DB_ENCRYPT:-true}
       - DB_TRUST_CERT=${DB_TRUST_CERT:-true}
     volumes:
+      # Montar carpeta uploads para persistir vouchers
+      # La carpeta ./uploads del host se monta en /app/uploads del contenedor
+      # Esto asegura que los archivos persistan aunque se reinicie el contenedor
       - ./uploads:/app/uploads
     restart: unless-stopped
     # Si SQL Server está en otra máquina, descomenta y ajusta:

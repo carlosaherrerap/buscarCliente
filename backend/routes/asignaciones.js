@@ -5,13 +5,22 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Ruta del directorio de uploads (raíz del proyecto)
-const uploadsDir = path.join(__dirname, '../../uploads');
+// Ruta del directorio de uploads
+// En Docker: /app/uploads (desde WORKDIR /app)
+// En desarrollo: ../../uploads (raíz del proyecto)
+const isDocker = process.env.DOCKER === 'true' || fs.existsSync('/.dockerenv');
+const uploadsDir = isDocker 
+  ? path.join(__dirname, '../uploads')  // En Docker: /app/uploads
+  : path.join(__dirname, '../../uploads'); // En desarrollo: raíz del proyecto
 
 // Crear directorio de uploads si no existe
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Directorio de uploads creado en:', uploadsDir);
 }
+
+console.log('Directorio de uploads configurado:', uploadsDir);
+console.log('Es Docker:', isDocker);
 
 // Configurar multer para subir archivos con nombres descriptivos
 const storage = multer.diskStorage({
@@ -22,8 +31,9 @@ const storage = multer.diskStorage({
     // Generar nombre único: timestamp + nombre original
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
-    const name = path.basename(file.originalname, ext);
-    const filename = `${name}-${uniqueSuffix}${ext}`;
+    const name = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9]/g, '_'); // Limpiar nombre
+    const filename = `voucher_${name}_${uniqueSuffix}${ext}`;
+    console.log('Generando nombre de archivo:', filename);
     cb(null, filename);
   }
 });
@@ -63,9 +73,38 @@ router.post('/', upload.single('voucher'), async (req, res) => {
     
     let voucherPath = null;
     if (req.file) {
+      // Log para depuración
+      console.log('Archivo recibido:', {
+        originalname: req.file.originalname,
+        filename: req.file.filename,
+        path: req.file.path,
+        mimetype: req.file.mimetype
+      });
+      
+      // Verificar que el archivo se haya guardado correctamente
+      if (!req.file.filename) {
+        console.error('Error: req.file.filename está vacío');
+        return res.status(500).json({ 
+          error: 'Error al procesar el archivo',
+          message: 'No se pudo generar el nombre del archivo'
+        });
+      }
+      
       // Guardar la ruta relativa: uploads/nombre_archivo
+      // req.file.filename debería tener el nombre generado por el storage
       voucherPath = `uploads/${req.file.filename}`;
       uploadedFile = req.file.path;
+      
+      console.log('Ruta del voucher que se guardará en BD:', voucherPath);
+      
+      // Verificar que el archivo existe físicamente
+      if (!fs.existsSync(req.file.path)) {
+        console.error('Error: El archivo no existe en:', req.file.path);
+        return res.status(500).json({ 
+          error: 'Error al guardar el archivo',
+          message: 'El archivo no se guardó correctamente'
+        });
+      }
     }
     
     const result = await pool.request()
