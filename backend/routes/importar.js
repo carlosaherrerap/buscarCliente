@@ -100,7 +100,7 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
         const campoCapital = buscarCampo('CAPITAL');
         const campoDeudaTotal = buscarCampo('DEUDA TOTAL');
         const campoCampana = buscarCampo('CAMPAÑA') || buscarCampo('CAMPANA');
-        const campoFechaCastigo = buscarCampo('FECHA CASTIGO') || buscarCampo('FECHA_CASTIGO');
+        const campoFechaCastigo = buscarCampo('FECHA CASTIGO') || buscarCampo('FECHA_CASTIGO') || buscarCampo('FECHA CASTIGO') || buscarCampo('FECHA DE CASTIGO');
         const campoDireccion = buscarCampo('DIRECCION COMPLETA') || buscarCampo('DIRECCIÓN COMPLETA') || buscarCampo('DIRECCION');
         
         console.log('Campos encontrados:');
@@ -134,22 +134,73 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
         
         // Manejar fecha_castigo - puede venir como fecha de Excel o string
         let fecha_castigo = null;
-        if (campoFechaCastigo && row[campoFechaCastigo]) {
+        if (campoFechaCastigo && row[campoFechaCastigo] !== undefined && row[campoFechaCastigo] !== null && row[campoFechaCastigo] !== '') {
           const fechaValue = row[campoFechaCastigo];
-          if (fechaValue instanceof Date) {
-            fecha_castigo = fechaValue;
-          } else if (typeof fechaValue === 'string' && fechaValue.trim()) {
-            // Intentar parsear string a fecha
-            const fechaParsed = new Date(fechaValue);
-            if (!isNaN(fechaParsed.getTime())) {
-              fecha_castigo = fechaParsed;
+          console.log(`  - Valor crudo de FECHA CASTIGO: ${fechaValue} (tipo: ${typeof fechaValue})`);
+          
+          try {
+            if (fechaValue instanceof Date) {
+              fecha_castigo = fechaValue;
+              console.log(`  - Fecha parseada (Date): ${fecha_castigo}`);
+            } else if (typeof fechaValue === 'string' && fechaValue.trim()) {
+              // Intentar parsear string a fecha (varios formatos)
+              const fechaStr = fechaValue.trim();
+              let fechaParsed = null;
+              
+              // Detectar formato basado en el patrón
+              // Formato YYYY-MM-DD o YYYY/MM/DD
+              if (/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/.test(fechaStr)) {
+                // Año primero = YYYY-MM-DD
+                fechaParsed = new Date(fechaStr);
+                console.log(`  - Formato detectado: YYYY-MM-DD`);
+              }
+              // Formato DD-MM-YYYY o DD/MM/YYYY (día-mes-año)
+              else if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}/.test(fechaStr)) {
+                const parts = fechaStr.split(/[\/\-]/);
+                const dia = parseInt(parts[0], 10);
+                const mes = parseInt(parts[1], 10);
+                const año = parseInt(parts[2], 10);
+                
+                // Validar que el día sea <= 31 y mes <= 12 para determinar formato
+                // Si día > 12, definitivamente es DD-MM-YYYY
+                if (dia > 12) {
+                  fechaParsed = new Date(año, mes - 1, dia);
+                  console.log(`  - Formato detectado: DD-MM-YYYY (día=${dia}, mes=${mes}, año=${año})`);
+                }
+                // Si día <= 12, podría ser DD-MM-YYYY o MM-DD-YYYY
+                // Asumimos DD-MM-YYYY (formato más común en español)
+                else {
+                  fechaParsed = new Date(año, mes - 1, dia);
+                  console.log(`  - Formato detectado: DD-MM-YYYY (asumido, día=${dia}, mes=${mes}, año=${año})`);
+                }
+              }
+              // Intentar parseo directo como último recurso
+              else {
+                fechaParsed = new Date(fechaStr);
+                console.log(`  - Formato: parseo directo`);
+              }
+              
+              if (fechaParsed && !isNaN(fechaParsed.getTime())) {
+                fecha_castigo = fechaParsed;
+                console.log(`  - Fecha parseada (String): ${fecha_castigo.toISOString().split('T')[0]}`);
+              } else {
+                console.log(`  ⚠️  No se pudo parsear la fecha: ${fechaStr}`);
+              }
+            } else if (typeof fechaValue === 'number') {
+              // Fecha serial de Excel (número de días desde 1900-01-01)
+              // Excel usa 1900-01-01 como día 1, pero tiene un bug: considera 1900 como año bisiesto
+              // Fórmula correcta: (número - 25569) * 86400 * 1000
+              const excelEpoch = new Date(1899, 11, 30); // 30 de diciembre de 1899
+              fecha_castigo = new Date(excelEpoch.getTime() + fechaValue * 86400 * 1000);
+              console.log(`  - Fecha parseada (Excel serial ${fechaValue}): ${fecha_castigo}`);
             }
-          } else if (typeof fechaValue === 'number') {
-            // Fecha serial de Excel
-            fecha_castigo = new Date((fechaValue - 25569) * 86400 * 1000);
+          } catch (error) {
+            console.error(`  ❌ Error al procesar fecha: ${error.message}`);
           }
+        } else {
+          console.log(`  - fecha_castigo: NULL (campo no encontrado o vacío)`);
         }
-        console.log(`  - fecha_castigo: ${fecha_castigo}`);
+        console.log(`  - fecha_castigo final: ${fecha_castigo ? fecha_castigo.toISOString().split('T')[0] : 'NULL'}`);
         
         const direccion = campoDireccion && row[campoDireccion] ? String(row[campoDireccion]).trim() || null : null;
         console.log(`  - direccion: ${direccion}`);
@@ -199,6 +250,27 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
         console.log(`✓ Cartera obtenida/creada: ID ${id_cartera} (${nombreCartera})`);
 
         // 3. Crear o actualizar cuenta
+        // Formatear fecha_castigo para SQL (solo la parte de fecha, sin hora)
+        let fechaCastigoSQL = null;
+        if (fecha_castigo) {
+          try {
+            // Asegurar que sea un objeto Date válido
+            const fecha = fecha_castigo instanceof Date ? fecha_castigo : new Date(fecha_castigo);
+            if (!isNaN(fecha.getTime())) {
+              // Formatear como YYYY-MM-DD para SQL Server
+              const year = fecha.getFullYear();
+              const month = String(fecha.getMonth() + 1).padStart(2, '0');
+              const day = String(fecha.getDate()).padStart(2, '0');
+              fechaCastigoSQL = `${year}-${month}-${day}`;
+              console.log(`  ✓ Fecha formateada para SQL: ${fechaCastigoSQL}`);
+            } else {
+              console.log(`  ⚠️  Fecha inválida, se guardará como NULL`);
+            }
+          } catch (error) {
+            console.error(`  ❌ Error al formatear fecha: ${error.message}`);
+          }
+        }
+        
         request = new sql.Request(transaction);
         await request
           .input('id_cliente', sql.Int, id_cliente)
@@ -209,7 +281,7 @@ router.post('/clientes', upload.single('archivo'), async (req, res) => {
           .input('producto', sql.VarChar, producto || null)
           .input('sub_cartera', sql.VarChar, sub_cartera || null)
           .input('campana', sql.VarChar, campana || null)
-          .input('fecha_castigo', sql.Date, fecha_castigo || null)
+          .input('fecha_castigo', sql.Date, fechaCastigoSQL || null)
           .query(`
             IF NOT EXISTS (SELECT 1 FROM cuenta WHERE id_cliente = @id_cliente AND numero_cuenta = @numero_cuenta)
             BEGIN

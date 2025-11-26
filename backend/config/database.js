@@ -2,41 +2,48 @@
 const path = require('path');
 const fs = require('fs');
 
-// Intentar cargar desde diferentes ubicaciones posibles
-const envPaths = [
-  path.join(__dirname, '../../.env'),      // Desde backend/config/ -> raíz
-  path.join(__dirname, '../.env'),        // Desde backend/config/ -> backend/
-  path.join(process.cwd(), '.env')       // Desde el directorio actual de trabajo
-];
+// Detectar si estamos en Docker
+const isDocker = process.env.DOCKER === 'true' || fs.existsSync('/.dockerenv');
 
 let envLoaded = false;
-console.log('Buscando archivo .env...');
-console.log('Directorio actual de trabajo:', process.cwd());
-console.log('__dirname:', __dirname);
 
-for (const envPath of envPaths) {
-  console.log('  Probando:', envPath, '- Existe:', fs.existsSync(envPath));
-  if (fs.existsSync(envPath)) {
-    const result = require('dotenv').config({ path: envPath });
-    if (!result.error) {
-      console.log('✓ Archivo .env cargado desde:', envPath);
-      envLoaded = true;
-      break;
-    } else {
-      console.log('  Error al cargar:', result.error.message);
+// En Docker, las variables de entorno ya están disponibles desde docker-compose.yml
+// No necesitamos cargar el archivo .env
+if (!isDocker) {
+  // Solo intentar cargar .env si NO estamos en Docker
+  console.log('Buscando archivo .env...');
+  console.log('Directorio actual de trabajo:', process.cwd());
+  console.log('__dirname:', __dirname);
+  
+  const envPaths = [
+    path.join(__dirname, '../../.env'),      // Desde backend/config/ -> raíz
+    path.join(__dirname, '../.env'),        // Desde backend/config/ -> backend/
+    path.join(process.cwd(), '.env')       // Desde el directorio actual de trabajo
+  ];
+
+  for (const envPath of envPaths) {
+    console.log('  Probando:', envPath, '- Existe:', fs.existsSync(envPath));
+    if (fs.existsSync(envPath)) {
+      const result = require('dotenv').config({ path: envPath });
+      if (!result.error) {
+        console.log('✓ Archivo .env cargado desde:', envPath);
+        envLoaded = true;
+        break;
+      } else {
+        console.log('  Error al cargar:', result.error.message);
+      }
     }
   }
-}
 
-if (!envLoaded) {
-  console.warn('⚠️  No se encontró archivo .env. Usando valores por defecto o variables de sistema.');
-  console.warn('  Buscado en:', envPaths);
+  if (!envLoaded) {
+    console.warn('⚠️  No se encontró archivo .env. Usando valores por defecto o variables de sistema.');
+    console.warn('  Buscado en:', envPaths);
+  }
+} else {
+  console.log('✓ Entorno Docker detectado. Usando variables de entorno del contenedor.');
 }
 
 const sql = require('mssql');
-
-// Detectar si estamos en Docker
-const isDocker = process.env.DOCKER === 'true' || fs.existsSync('/.dockerenv');
 
 // Función para procesar el servidor SQL
 function processServerName(serverName) {
