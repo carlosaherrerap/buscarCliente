@@ -119,7 +119,16 @@ console.log('Variables de entorno RAW (del .env):');
 console.log('  process.env.DB_SERVER:', process.env.DB_SERVER || 'NO DEFINIDA');
 console.log('  process.env.DB_USER:', process.env.DB_USER || 'NO DEFINIDA');
 console.log('  process.env.DB_NAME:', process.env.DB_NAME || 'NO DEFINIDA');
-console.log('  process.env.DB_PASSWORD:', process.env.DB_PASSWORD ? '***' + process.env.DB_PASSWORD.slice(-2) + ' (length: ' + process.env.DB_PASSWORD.length + ')' : 'NO DEFINIDA');
+const passwordLength = process.env.DB_PASSWORD ? process.env.DB_PASSWORD.length : 0;
+const passwordLast2 = process.env.DB_PASSWORD ? process.env.DB_PASSWORD.slice(-2) : '';
+const passwordFirst2 = process.env.DB_PASSWORD ? process.env.DB_PASSWORD.slice(0, 2) : '';
+console.log('  process.env.DB_PASSWORD:', process.env.DB_PASSWORD ? `${passwordFirst2}***${passwordLast2} (length: ${passwordLength})` : 'NO DEFINIDA');
+// Log temporal para debug (mostrar caracteres de la contraseña sin mostrar el contenido completo)
+if (process.env.DB_PASSWORD) {
+  const pwd = process.env.DB_PASSWORD;
+  console.log('  DB_PASSWORD debug - Caracteres:', pwd.split('').map((c, i) => i < 2 || i >= pwd.length - 2 ? c : '*').join(''));
+  console.log('  DB_PASSWORD debug - Últimos 4 chars:', pwd.slice(-4));
+}
 console.log('');
 console.log('Configuración final que se usará:');
 console.log('  Entorno Docker detectado:', isDocker ? 'SÍ' : 'NO');
@@ -151,7 +160,16 @@ async function getPool() {
       console.log(`  - Servidor: ${config.server}`);
       console.log(`  - Base de datos: ${config.database}`);
       console.log(`  - Usuario: ${config.user}`);
-      console.log(`  - Contraseña: ${config.password ? '***' + config.password.slice(-2) + ' (length: ' + config.password.length + ')' : 'NO DEFINIDA'}`);
+      const pwdLength = config.password ? config.password.length : 0;
+      const pwdLast2 = config.password ? config.password.slice(-2) : '';
+      const pwdFirst2 = config.password ? config.password.slice(0, 2) : '';
+      console.log(`  - Contraseña: ${config.password ? `${pwdFirst2}***${pwdLast2} (length: ${pwdLength})` : 'NO DEFINIDA'}`);
+      // Debug temporal: mostrar estructura de la contraseña
+      if (config.password) {
+        const pwd = config.password;
+        console.log(`  - Contraseña debug - Primeros 3: "${pwd.slice(0, 3)}", Últimos 3: "${pwd.slice(-3)}"`);
+        console.log(`  - Contraseña debug - Caracteres especiales: ${pwd.includes('$') ? 'SÍ (contiene $)' : 'NO'}`);
+      }
       console.log(`  - Encrypt: ${config.options.encrypt}`);
       console.log(`  - Trust Certificate: ${config.options.trustServerCertificate}`);
       console.log('');
