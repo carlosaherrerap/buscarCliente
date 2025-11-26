@@ -22,6 +22,12 @@ if (!fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
 }
 
+// Servir archivos de uploads
+const uploadsPath = path.join(__dirname, '../uploads');
+if (fs.existsSync(uploadsPath)) {
+  app.use('/uploads', express.static(uploadsPath));
+}
+
 // Rutas
 const clientesRoutes = require('./routes/clientes');
 const asesoresRoutes = require('./routes/asesores');

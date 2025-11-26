@@ -5,32 +5,73 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configurar multer para subir archivos
-const upload = multer({
-  dest: 'uploads/',
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
-});
+// Ruta del directorio de uploads (raíz del proyecto)
+const uploadsDir = path.join(__dirname, '../../uploads');
 
 // Crear directorio de uploads si no existe
-if (!fs.existsSync('uploads')) {
-  fs.mkdirSync('uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
+// Configurar multer para subir archivos con nombres descriptivos
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    // Generar nombre único: timestamp + nombre original
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    const name = path.basename(file.originalname, ext);
+    const filename = `${name}-${uniqueSuffix}${ext}`;
+    cb(null, filename);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: function (req, file, cb) {
+    // Permitir solo imágenes y PDFs
+    const allowedTypes = /jpeg|jpg|png|gif|pdf/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten archivos de imagen o PDF'));
+    }
+  }
+});
 
 // Crear asignación (ahora usa id_cuenta en lugar de id_cliente)
 router.post('/', upload.single('voucher'), async (req, res) => {
+  let uploadedFile = null;
+  
   try {
     const { id_cuenta, id_asesor, importe, fecha_pago, tipo_pago } = req.body;
     const pool = await getPool();
     
+    // Validar campos requeridos
+    if (!id_cuenta || !id_asesor || !importe || !fecha_pago || !tipo_pago) {
+      return res.status(400).json({ 
+        error: 'Faltan campos requeridos',
+        message: 'Todos los campos son obligatorios excepto el voucher'
+      });
+    }
+    
     let voucherPath = null;
     if (req.file) {
-      voucherPath = req.file.filename;
+      // Guardar la ruta relativa: uploads/nombre_archivo
+      voucherPath = `uploads/${req.file.filename}`;
+      uploadedFile = req.file.path;
     }
     
     const result = await pool.request()
-      .input('id_cuenta', sql.Int, id_cuenta)
-      .input('id_asesor', sql.Int, id_asesor)
-      .input('importe', sql.Float, importe)
+      .input('id_cuenta', sql.Int, parseInt(id_cuenta))
+      .input('id_asesor', sql.Int, parseInt(id_asesor))
+      .input('importe', sql.Float, parseFloat(importe))
       .input('fecha_pago', sql.Date, fecha_pago)
       .input('tipo_pago', sql.VarChar, tipo_pago)
       .input('voucher', sql.VarChar, voucherPath)
@@ -43,11 +84,24 @@ router.post('/', upload.single('voucher'), async (req, res) => {
     res.json({ 
       success: true, 
       message: 'Asignación guardada correctamente',
-      id: result.recordset[0].id
+      id: result.recordset[0].id,
+      voucher: voucherPath
     });
   } catch (error) {
+    // Si hubo error y se subió un archivo, eliminarlo
+    if (uploadedFile && fs.existsSync(uploadedFile)) {
+      try {
+        fs.unlinkSync(uploadedFile);
+      } catch (unlinkError) {
+        console.error('Error al eliminar archivo subido:', unlinkError);
+      }
+    }
+    
     console.error('Error al crear asignación:', error);
-    res.status(500).json({ error: 'Error al crear asignación', message: error.message });
+    res.status(500).json({ 
+      error: 'Error al crear asignación', 
+      message: error.message 
+    });
   }
 });
 

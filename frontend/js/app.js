@@ -639,7 +639,6 @@ document.addEventListener('click', (e) => {
 document.getElementById('formAsignar').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const idCliente = document.getElementById('clienteId').value;
     const idAsesor = document.getElementById('idAsesor').value;
     const importe = document.getElementById('importe').value;
     const fechaPago = document.getElementById('fechaPago').value;
