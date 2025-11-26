@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(cors());
@@ -65,6 +65,24 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
+  console.log('');
+  console.log('='.repeat(60));
+  console.log('🚀 SERVIDOR INICIADO');
+  console.log('='.repeat(60));
+  console.log(`  - Puerto interno del contenedor: ${PORT}`);
+  console.log(`  - Puerto externo (host): 8080`);
+  console.log(`  - URL de acceso: http://localhost:8080`);
+  console.log(`  - Entorno: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`  - Docker: ${process.env.DOCKER === 'true' ? 'SÍ' : 'NO'}`);
+  console.log('='.repeat(60));
+  console.log('');
+  
+  // Intentar conectar a la base de datos al iniciar
+  const { getPool } = require('./config/database');
+  getPool().catch(err => {
+    console.error('⚠️  No se pudo establecer conexión inicial con la base de datos.');
+    console.error('   El servidor continuará ejecutándose, pero las operaciones de BD fallarán.');
+    console.error('   Revisa la configuración de conexión.');
+  });
 });
 

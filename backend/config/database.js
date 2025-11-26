@@ -67,6 +67,27 @@ function processServerName(serverName) {
   return serverName;
 }
 
+// Validar variables de entorno críticas en Docker
+if (isDocker) {
+  const requiredEnvVars = ['DB_SERVER', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+  const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+  if (missingVars.length > 0) {
+    console.error('');
+    console.error('='.repeat(60));
+    console.error('❌ ERROR: Variables de entorno faltantes');
+    console.error('='.repeat(60));
+    console.error('Las siguientes variables son requeridas pero no están definidas:');
+    missingVars.forEach(varName => {
+      console.error(`  - ${varName}`);
+    });
+    console.error('');
+    console.error('Asegúrate de definir estas variables en docker-compose.yml o en el archivo .env');
+    console.error('='.repeat(60));
+    console.error('');
+  }
+}
+
 // Configuración de conexión a SQL Server
 const config = {
   user: process.env.DB_USER || 'sa',
@@ -113,14 +134,67 @@ console.log('='.repeat(60));
 console.log('');
 
 let pool = null;
+let connectionAttempted = false;
 
 async function getPool() {
   if (!pool) {
+    if (!connectionAttempted) {
+      connectionAttempted = true;
+      console.log('');
+      console.log('='.repeat(60));
+      console.log('INTENTANDO CONECTAR A SQL SERVER...');
+      console.log('='.repeat(60));
+    }
+    
     try {
+      console.log('Conectando con los siguientes parámetros:');
+      console.log(`  - Servidor: ${config.server}`);
+      console.log(`  - Base de datos: ${config.database}`);
+      console.log(`  - Usuario: ${config.user}`);
+      console.log(`  - Contraseña: ${config.password ? '***' + config.password.slice(-2) + ' (length: ' + config.password.length + ')' : 'NO DEFINIDA'}`);
+      console.log(`  - Encrypt: ${config.options.encrypt}`);
+      console.log(`  - Trust Certificate: ${config.options.trustServerCertificate}`);
+      console.log('');
+      
       pool = await sql.connect(config);
-      console.log('Conexión a SQL Server establecida correctamente');
+      
+      // Verificar que la conexión esté activa
+      const testRequest = pool.request();
+      const testResult = await testRequest.query('SELECT @@VERSION as version, DB_NAME() as currentDB');
+      
+      console.log('='.repeat(60));
+      console.log('✅ CONEXIÓN A SQL SERVER EXITOSA');
+      console.log('='.repeat(60));
+      console.log(`  - Versión SQL Server: ${testResult.recordset[0].version.split('\n')[0]}`);
+      console.log(`  - Base de datos actual: ${testResult.recordset[0].currentDB}`);
+      console.log('='.repeat(60));
+      console.log('');
+      
     } catch (err) {
-      console.error('Error al conectar con SQL Server:', err);
+      console.log('='.repeat(60));
+      console.log('❌ ERROR AL CONECTAR CON SQL SERVER');
+      console.log('='.repeat(60));
+      console.error('Detalles del error:', err.message);
+      console.error('Código del error:', err.code);
+      
+      if (err.code === 'ELOGIN') {
+        console.error('');
+        console.error('⚠️  ERROR DE AUTENTICACIÓN');
+        console.error('   El usuario o contraseña son incorrectos.');
+        console.error('   Verifica las variables de entorno:');
+        console.error('   - DB_USER:', process.env.DB_USER || 'NO DEFINIDA');
+        console.error('   - DB_PASSWORD:', process.env.DB_PASSWORD ? '***' + process.env.DB_PASSWORD.slice(-2) + ' (length: ' + process.env.DB_PASSWORD.length + ')' : 'NO DEFINIDA');
+      } else if (err.code === 'EINSTLOOKUP' || err.code === 'ENOTFOUND') {
+        console.error('');
+        console.error('⚠️  ERROR DE RESOLUCIÓN DE NOMBRE');
+        console.error('   No se pudo resolver el nombre del servidor.');
+        console.error('   En Docker, asegúrate de usar: host.docker.internal');
+        console.error('   - DB_SERVER:', process.env.DB_SERVER || 'NO DEFINIDA');
+      }
+      
+      console.log('='.repeat(60));
+      console.log('');
+      
       throw err;
     }
   }

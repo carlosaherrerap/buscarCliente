@@ -18,10 +18,10 @@ COPY frontend/ ./frontend/
 RUN mkdir -p uploads/temp
 
 # Exponer puerto
-EXPOSE 5000
+EXPOSE 4000
 
 # Variables de entorno por defecto
-ENV PORT=5000
+ENV PORT=4000
 ENV NODE_ENV=production
 
 # Comando para iniciar
