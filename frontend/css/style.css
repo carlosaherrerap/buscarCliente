@@ -32,7 +32,7 @@ body {
     margin-top: auto;
 }
 
-.header-logo, .footer-logo {
+.header-logo {
     height: 50px;
     width: auto;
 }
@@ -149,8 +149,14 @@ body {
     color: white !important;
 }
 
+/* Sobrescribir Bootstrap Primary Background */
 .bg-primary {
-    background-color: var(--color-primary) !important;
+    background-color: #314F8D !important;
+}
+
+.bg-primary.text-white,
+.bg-primary .text-white {
+    color: #ffffff !important;
 }
 
 .bg-success {
@@ -243,15 +249,24 @@ body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
+/* Sobrescribir Bootstrap Primary con color corporativo */
 .btn-primary {
-    background: var(--color-primary);
-    border: none;
+    background-color: #314F8D !important;
+    border-color: #314F8D !important;
     box-shadow: 0 2px 8px rgba(49, 79, 141, 0.3);
 }
 
-.btn-primary:hover {
-    background: #254077;
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: #254077 !important;
+    border-color: #254077 !important;
     box-shadow: 0 4px 12px rgba(49, 79, 141, 0.4);
+}
+
+.btn-primary:not(:disabled):not(.disabled):active {
+    background-color: #1a2f5a !important;
+    border-color: #1a2f5a !important;
 }
 
 .btn-success {
@@ -317,11 +332,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 h1.text-primary {
-    color: var(--color-primary) !important;
+    color: #314F8D !important;
 }
 
 .text-primary {
-    color: var(--color-primary) !important;
+    color: #314F8D !important;
 }
 
 /* Responsive */
