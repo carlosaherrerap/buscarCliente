@@ -573,6 +573,55 @@ document.getElementById('btnAplicarRanking').addEventListener('click', async () 
     }
 });
 
+// Descargar ranking
+document.getElementById('btnDescargarRanking').addEventListener('click', async () => {
+    const searchType = document.querySelector('input[name="searchTypeRanking"]:checked').value;
+    const searchValue = document.getElementById('searchInputRanking').value.trim();
+    
+    if (!searchValue) {
+        showModal('Error', 'Por favor ingrese DNI o nombre del asesor y aplique los filtros primero', 'error');
+        return;
+    }
+    
+    const filtros = {
+        tipo: searchType,
+        tipo_fecha: document.getElementById('tipoFechaRanking').value,
+        fecha_inicio: document.getElementById('fechaInicioRanking').value,
+        fecha_fin: document.getElementById('fechaFinRanking').value
+    };
+    
+    if (searchType === 'dni') {
+        filtros.dni = searchValue;
+    } else {
+        filtros.nombres = searchValue;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/reportes/ranking/descargar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(filtros)
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ranking_asesor.xlsx`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            showModal('Éxito', 'Excel descargado correctamente', 'success');
+        } else {
+            const data = await response.json();
+            showModal('Error', data.error || 'Error al descargar ranking', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showModal('Error', 'Error al descargar: ' + error.message, 'error');
+    }
+});
+
 document.getElementById('searchBtnRanking').addEventListener('click', () => {
     document.getElementById('btnAplicarRanking').click();
 });

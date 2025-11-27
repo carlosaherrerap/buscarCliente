@@ -201,7 +201,7 @@ router.post('/pagos/descargar', async (req, res) => {
     worksheet.getRow(1).fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FF4472C4' }
+      fgColor: { argb: 'FF314F8D' }
     };
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
@@ -304,8 +304,8 @@ router.post('/ranking', async (req, res) => {
     const { dni, nombres, tipo, fecha_inicio, fecha_fin, tipo_fecha } = req.body;
     const pool = await getPool();
 
-    // Buscar asesor
-    let queryAsesor = 'SELECT id, dni, nombre FROM asesor WHERE 1=1';
+    // Buscar asesor por DNI o nombre
+    let queryAsesor = 'SELECT id, dni, nombre, cargo, meta FROM asesor WHERE 1=1';
     const requestAsesor = pool.request();
 
     if (tipo === 'dni' && dni) {
@@ -329,27 +329,24 @@ router.post('/ranking', async (req, res) => {
       return res.status(404).json({ error: 'Asesor no encontrado. Verifique el DNI o nombre ingresado.' });
     }
     
-    if (asesorResult.recordset.length > 1) {
-      console.log('Se encontraron múltiples asesores:', asesorResult.recordset);
-      // Si hay múltiples, usar el primero
-    }
+    // Si hay múltiples, usar el primero
+    const asesor = asesorResult.recordset[0];
+    const idAsesor = asesor.id;
+    const totalMetas = parseFloat(asesor.meta) || 0;
 
-    const idAsesor = asesorResult.recordset[0].id;
-
-    // Calcular estadísticas
+    // Calcular estadísticas desde asignacion_cliente filtrado por id_asesor
     let queryStats = `
       SELECT 
-        COUNT(DISTINCT cu.id_cliente) as total_clientes,
-        SUM(ac.importe) as total_pagos,
-        COUNT(ac.id) as cantidad_pagos
+        COUNT(*) as total_clientes,
+        SUM(ac.importe) as total_pagos
       FROM asignacion_cliente ac
-      INNER JOIN cuenta cu ON ac.id_cuenta = cu.id
       WHERE ac.id_asesor = @id_asesor
     `;
 
     const requestStats = pool.request();
     requestStats.input('id_asesor', sql.Int, idAsesor);
 
+    // Aplicar filtros de fecha
     if (tipo_fecha === 'rango') {
       if (fecha_inicio) {
         queryStats += ' AND ac.fecha_pago >= @fecha_inicio';
@@ -367,16 +364,17 @@ router.post('/ranking', async (req, res) => {
     const statsResult = await requestStats.query(queryStats);
     const stats = statsResult.recordset[0];
 
-    // Obtener total de metas (asumiendo que hay una tabla de metas)
-    // Por ahora, usaremos un valor fijo o calculado
-    const totalMetas = 0; // TODO: Implementar tabla de metas
-
+    const totalClientes = parseInt(stats.total_clientes) || 0;
     const totalPagos = parseFloat(stats.total_pagos) || 0;
+    
+    // Rate% = (Total de Pagos / Total de Metas) * 100
     const rate = totalMetas > 0 ? (totalPagos / totalMetas) * 100 : 0;
 
     res.json({
-      id_asesor,
-      total_clientes: stats.total_clientes || 0,
+      id_asesor: idAsesor,
+      nombres: asesor.nombre,
+      cargo: asesor.cargo || '',
+      total_clientes: totalClientes,
       total_pagos: totalPagos,
       total_metas: totalMetas,
       rate: rate.toFixed(2)
