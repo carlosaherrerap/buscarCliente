@@ -560,8 +560,12 @@ document.getElementById('btnAplicarRanking').addEventListener('click', async () 
             document.getElementById('totalMetas').textContent = parseFloat(data.total_metas).toFixed(2);
             document.getElementById('totalClientes').textContent = data.total_clientes;
             document.getElementById('rate').textContent = parseFloat(data.rate).toFixed(2) + '%';
+            // Mostrar mensaje de éxito si se encontró el asesor
+            showModal('Éxito', 'Ranking del asesor obtenido correctamente', 'success');
         } else {
-            showModal('Error', data.error || 'Error al obtener ranking', 'error');
+            const errorMsg = data.error || 'Error al obtener ranking';
+            showModal('Error', errorMsg, 'error');
+            console.error('Error al obtener ranking:', data);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -705,8 +709,10 @@ document.getElementById('formAsignar').addEventListener('submit', async (e) => {
             document.getElementById('formAsignar').reset();
             document.getElementById('idAsesor').value = '';
             document.getElementById('inputAsesor').value = '';
-            // Mostrar botón de descargar después de guardar
-            document.getElementById('btnDescargarCliente').style.display = 'inline-block';
+            // Regresar a la vista inicial después de guardar
+            setTimeout(() => {
+                showPage('main-page');
+            }, 1500);
         } else {
             showModal('Error', data.error || 'Error al guardar asignación', 'error');
         }

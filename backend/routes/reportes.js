@@ -305,21 +305,33 @@ router.post('/ranking', async (req, res) => {
     const pool = await getPool();
 
     // Buscar asesor
-    let queryAsesor = 'SELECT id FROM asesor WHERE 1=1';
+    let queryAsesor = 'SELECT id, dni, nombre FROM asesor WHERE 1=1';
     const requestAsesor = pool.request();
 
     if (tipo === 'dni' && dni) {
       queryAsesor += ' AND dni = @dni';
-      requestAsesor.input('dni', sql.VarChar(8), dni);
+      requestAsesor.input('dni', sql.VarChar(8), dni.trim());
+      console.log('Buscando asesor por DNI:', dni.trim());
     } else if (tipo === 'nombres' && nombres) {
       queryAsesor += ' AND nombre LIKE @nombre';
-      requestAsesor.input('nombre', sql.VarChar, `%${nombres}%`);
+      requestAsesor.input('nombre', sql.VarChar, `%${nombres.trim()}%`);
+      console.log('Buscando asesor por nombre:', nombres.trim());
+    } else {
+      return res.status(400).json({ error: 'Debe proporcionar DNI o nombre del asesor' });
     }
 
+    console.log('Query de búsqueda de asesor:', queryAsesor);
     const asesorResult = await requestAsesor.query(queryAsesor);
+    console.log('Resultados encontrados:', asesorResult.recordset.length);
     
     if (asesorResult.recordset.length === 0) {
-      return res.status(404).json({ error: 'Asesor no encontrado' });
+      console.log('No se encontró ningún asesor con los criterios proporcionados');
+      return res.status(404).json({ error: 'Asesor no encontrado. Verifique el DNI o nombre ingresado.' });
+    }
+    
+    if (asesorResult.recordset.length > 1) {
+      console.log('Se encontraron múltiples asesores:', asesorResult.recordset);
+      // Si hay múltiples, usar el primero
     }
 
     const idAsesor = asesorResult.recordset[0].id;
