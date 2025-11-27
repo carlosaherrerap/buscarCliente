@@ -385,6 +385,122 @@ router.post('/ranking', async (req, res) => {
   }
 });
 
+// Descargar ranking de asesores como Excel
+router.post('/ranking/descargar', async (req, res) => {
+  try {
+    const { dni, nombres, tipo, fecha_inicio, fecha_fin, tipo_fecha } = req.body;
+    const pool = await getPool();
+
+    // Buscar asesor (misma lógica que /ranking)
+    let queryAsesor = 'SELECT id, dni, nombre, cargo, meta FROM asesor WHERE 1=1';
+    const requestAsesor = pool.request();
+
+    if (tipo === 'dni' && dni) {
+      queryAsesor += ' AND dni = @dni';
+      requestAsesor.input('dni', sql.VarChar(8), dni.trim());
+    } else if (tipo === 'nombres' && nombres) {
+      queryAsesor += ' AND nombre LIKE @nombre';
+      requestAsesor.input('nombre', sql.VarChar, `%${nombres.trim()}%`);
+    } else {
+      return res.status(400).json({ error: 'Debe proporcionar DNI o nombre del asesor' });
+    }
+
+    const asesorResult = await requestAsesor.query(queryAsesor);
+    
+    if (asesorResult.recordset.length === 0) {
+      return res.status(404).json({ error: 'Asesor no encontrado' });
+    }
+
+    const asesor = asesorResult.recordset[0];
+    const idAsesor = asesor.id;
+    const totalMetas = parseFloat(asesor.meta) || 0;
+
+    // Calcular estadísticas
+    let queryStats = `
+      SELECT 
+        COUNT(*) as total_clientes,
+        SUM(ac.importe) as total_pagos
+      FROM asignacion_cliente ac
+      WHERE ac.id_asesor = @id_asesor
+    `;
+
+    const requestStats = pool.request();
+    requestStats.input('id_asesor', sql.Int, idAsesor);
+
+    if (tipo_fecha === 'rango') {
+      if (fecha_inicio) {
+        queryStats += ' AND ac.fecha_pago >= @fecha_inicio';
+        requestStats.input('fecha_inicio', sql.Date, fecha_inicio);
+      }
+      if (fecha_fin) {
+        queryStats += ' AND ac.fecha_pago <= @fecha_fin';
+        requestStats.input('fecha_fin', sql.Date, fecha_fin);
+      }
+    } else if (tipo_fecha === 'dia' && fecha_inicio) {
+      queryStats += ' AND CAST(ac.fecha_pago AS DATE) = CAST(@fecha_inicio AS DATE)';
+      requestStats.input('fecha_inicio', sql.Date, fecha_inicio);
+    }
+
+    const statsResult = await requestStats.query(queryStats);
+    const stats = statsResult.recordset[0];
+
+    const totalClientes = parseInt(stats.total_clientes) || 0;
+    const totalPagos = parseFloat(stats.total_pagos) || 0;
+    const rate = totalMetas > 0 ? (totalPagos / totalMetas) * 100 : 0;
+
+    // Crear Excel con ExcelJS
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Ranking Asesor');
+
+    // Definir columnas
+    worksheet.columns = [
+      { header: 'Id_asesor', key: 'id_asesor', width: 12 },
+      { header: 'Nombres', key: 'nombres', width: 30 },
+      { header: 'Cargo', key: 'cargo', width: 20 },
+      { header: 'Total Clientes', key: 'total_clientes', width: 15 },
+      { header: 'Total Pagos', key: 'total_pagos', width: 15 },
+      { header: 'Total Metas', key: 'total_metas', width: 15 },
+      { header: 'Rate%', key: 'rate', width: 12 }
+    ];
+
+    // Estilo para el encabezado
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF314F8D' }
+    };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // Agregar datos
+    const excelRow = worksheet.addRow({
+      id_asesor: idAsesor,
+      nombres: asesor.nombre,
+      cargo: asesor.cargo || '',
+      total_clientes: totalClientes,
+      total_pagos: totalPagos,
+      total_metas: totalMetas,
+      rate: parseFloat(rate.toFixed(2))
+    });
+
+    // Formatear números
+    excelRow.getCell('total_pagos').numFmt = '#,##0.00';
+    excelRow.getCell('total_metas').numFmt = '#,##0.00';
+    excelRow.getCell('rate').numFmt = '0.00"%"';
+
+    // Generar buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=ranking_asesor_${idAsesor}.xlsx`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Error al descargar ranking:', error);
+    res.status(500).json({ error: 'Error al descargar ranking', message: error.message });
+  }
+});
+
 // Descargar datos de cliente y asignación
 router.post('/cliente-asignacion/descargar', async (req, res) => {
   try {
