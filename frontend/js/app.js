@@ -560,12 +560,18 @@ document.getElementById('btnAplicarRanking').addEventListener('click', async () 
             document.getElementById('totalMetas').textContent = parseFloat(data.total_metas).toFixed(2);
             document.getElementById('totalClientes').textContent = data.total_clientes;
             document.getElementById('rate').textContent = parseFloat(data.rate).toFixed(2) + '%';
-            // Mostrar mensaje de éxito si se encontró el asesor
-            showModal('Éxito', 'Ranking del asesor obtenido correctamente', 'success');
+            
+            // Mostrar nombre del asesor debajo del input
+            if (data.nombres) {
+                document.getElementById('nombreAsesor').textContent = data.nombres;
+                document.getElementById('asesorEncontrado').style.display = 'block';
+            }
         } else {
             const errorMsg = data.error || 'Error al obtener ranking';
             showModal('Error', errorMsg, 'error');
             console.error('Error al obtener ranking:', data);
+            // Ocultar mensaje de asesor si hay error
+            document.getElementById('asesorEncontrado').style.display = 'none';
         }
     } catch (error) {
         console.error('Error:', error);
@@ -619,6 +625,40 @@ document.getElementById('btnDescargarRanking').addEventListener('click', async (
     } catch (error) {
         console.error('Error:', error);
         showModal('Error', 'Error al descargar: ' + error.message, 'error');
+    }
+});
+
+// Filtrado en tiempo real mientras escribe el nombre del asesor
+let timeoutRanking = null;
+document.getElementById('searchInputRanking').addEventListener('input', async (e) => {
+    const searchType = document.querySelector('input[name="searchTypeRanking"]:checked').value;
+    const searchValue = e.target.value.trim();
+    
+    // Solo filtrar si está buscando por nombres y tiene al menos 2 caracteres
+    if (searchType === 'nombres' && searchValue.length >= 2) {
+        // Limpiar timeout anterior
+        if (timeoutRanking) {
+            clearTimeout(timeoutRanking);
+        }
+        
+        // Esperar 300ms después de que el usuario deje de escribir
+        timeoutRanking = setTimeout(async () => {
+            try {
+                const response = await fetch(`${API_URL}/asesores/buscar?tipo=nombres&nombres=${encodeURIComponent(searchValue)}`);
+                const asesores = await response.json();
+                
+                // Si hay resultados, mostrar sugerencias (opcional)
+                // Por ahora solo ocultamos el mensaje de asesor encontrado si no hay resultados
+                if (asesores.length === 0) {
+                    document.getElementById('asesorEncontrado').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error al buscar asesores:', error);
+            }
+        }, 300);
+    } else if (searchValue.length === 0) {
+        // Si el campo está vacío, ocultar el mensaje
+        document.getElementById('asesorEncontrado').style.display = 'none';
     }
 });
 

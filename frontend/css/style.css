@@ -159,8 +159,14 @@ body {
     color: #ffffff !important;
 }
 
+/* Asegurar que bg-success sea verde para alertas de éxito */
 .bg-success {
-    background-color: var(--color-secondary) !important;
+    background-color: #28a745 !important;
+}
+
+/* bg-danger debe seguir siendo rojo para errores */
+.bg-danger {
+    background-color: #dc3545 !important;
 }
 
 .bg-info {
@@ -337,6 +343,17 @@ h1.text-primary {
 
 .text-primary {
     color: #314F8D !important;
+}
+
+/* Botones switch (btn-check) con color azul */
+.btn-check:checked + .btn-outline-primary {
+    background-color: #314F8D !important;
+    border-color: #314F8D !important;
+    color: #ffffff !important;
+}
+
+.btn-check:focus + .btn-outline-primary {
+    box-shadow: 0 0 0 0.25rem rgba(49, 79, 141, 0.25) !important;
 }
 
 /* Responsive */
