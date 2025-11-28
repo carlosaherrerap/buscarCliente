@@ -13,13 +13,14 @@ pipeline {
                 echo '🚀 Iniciando pipeline CI/CD'
                 echo '📍 Directorio de trabajo: ${WORKSPACE}'
                 script {
-                    bat """@echo off
-cd /d "${WORKSPACE}"
-echo --- Archivos en el workspace ---
-dir
-echo --- Verificando Jenkinsfile ---
-if exist Jenkinsfile (echo Jenkinsfile encontrado) else (echo Jenkinsfile NO encontrado)
-"""
+                    bat """
+                        @echo off
+                        cd /d "${WORKSPACE}"
+                        echo --- Archivos en el workspace ---
+                        dir
+                        echo --- Verificando Jenkinsfile ---
+                        if exist Jenkinsfile (echo Jenkinsfile encontrado) else (echo Jenkinsfile NO encontrado)
+                    """
                 }
             }
         }
@@ -38,13 +39,14 @@ if exist Jenkinsfile (echo Jenkinsfile encontrado) else (echo Jenkinsfile NO enc
             steps {
                 script {
                     echo '🔄 Desplegando aplicación...'
-                    bat """@echo off
-cd /d "${PROJECT_DIR}"
-docker stop ${CONTAINER_NAME} 2>nul
-if errorlevel 1 echo Contenedor no existe o ya estaba detenido
-docker-compose build --no-cache
-docker-compose up -d
-"""
+                    bat """
+                        @echo off
+                        cd /d "${PROJECT_DIR}"
+                        docker stop ${CONTAINER_NAME} 2>nul
+                        if errorlevel 1 echo Contenedor no existe o ya estaba detenido
+                        docker-compose build --no-cache
+                        docker-compose up -d
+                    """
                 }
             }
         }
@@ -54,14 +56,17 @@ docker-compose up -d
                 script {
                     echo 'Verificando que el contenedor esté corriendo...'
                     sleep(time: 5, unit: 'SECONDS')
-                    bat """@echo off
-docker ps --filter name=${CONTAINER_NAME} --format "{{.Names}} - {{.Status}}"
-"""
+                    bat """
+                        @echo off
+                        docker ps --filter name=${CONTAINER_NAME} --format "{{.Names}} - {{.Status}}"
+                    """
                     
-                    bat """@echo off
-docker logs --tail 50 ${CONTAINER_NAME}
-if errorlevel 1 echo No se pudieron obtener los logs
-"""
+                    // Verificar logs para asegurar que no hay errores críticos
+                    bat """
+                        @echo off
+                        docker logs --tail 50 ${CONTAINER_NAME}
+                        if errorlevel 1 echo No se pudieron obtener los logs
+                    """
                 }
             }
         }
@@ -70,10 +75,11 @@ if errorlevel 1 echo No se pudieron obtener los logs
             steps {
                 script {
                     echo 'Limpiando imágenes Docker huérfanas...'
-                    bat """@echo off
-docker image prune -f
-if errorlevel 1 echo No hay imágenes para limpiar
-"""
+                    bat """
+                        @echo off
+                        docker image prune -f
+                        if errorlevel 1 echo No hay imágenes para limpiar
+                    """
                 }
             }
         }
@@ -82,9 +88,11 @@ if errorlevel 1 echo No hay imágenes para limpiar
     post {
         success {
             echo '✅ Despliegue exitoso!'
+            // Opcional: Enviar notificación (email, Slack, etc.)
         }
         failure {
             echo '❌ Error en el despliegue'
+            // Opcional: Enviar notificación de error
         }
         always {
             echo 'Pipeline finalizado'

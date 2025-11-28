@@ -10,28 +10,23 @@ Running on Jenkins
 [Pipeline] checkout
 The recommended git tool is: git.exe
 No credentials specified
-Cloning the remote Git repository
-Cloning repository https://github.com/carlosaherrerap/buscarCliente.git
- > git.exe init C:\ProgramData\Jenkins\.jenkins\workspace\ENTREGA Y DESPLIEGUE\ClientManager # timeout=10
+ > git.exe rev-parse --resolve-git-dir C:\ProgramData\Jenkins\.jenkins\workspace\ENTREGA Y DESPLIEGUE\ClientManager\.git # timeout=10
+Fetching changes from the remote Git repository
+ > git.exe config remote.origin.url https://github.com/carlosaherrerap/buscarCliente.git # timeout=10
 Fetching upstream changes from https://github.com/carlosaherrerap/buscarCliente.git
  > git.exe --version # timeout=10
  > git --version # 'git version 2.49.0.windows.1'
  > git.exe fetch --tags --force --progress -- https://github.com/carlosaherrerap/buscarCliente.git +refs/heads/*:refs/remotes/origin/* # timeout=10
- > git.exe config remote.origin.url https://github.com/carlosaherrerap/buscarCliente.git # timeout=10
- > git.exe config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
-Avoid second fetch
  > git.exe rev-parse "refs/remotes/origin/master^{commit}" # timeout=10
-Checking out Revision 2e3e61b653433d32edca9fc190aa79f6168ecbad (refs/remotes/origin/master)
+Checking out Revision 556dcdf0e4a5e482e30c8fbe014d508d807c3cf8 (refs/remotes/origin/master)
  > git.exe config core.sparsecheckout # timeout=10
- > git.exe checkout -f 2e3e61b653433d32edca9fc190aa79f6168ecbad # timeout=10
-Commit message: "viernes"
-First time build. Skipping changelog.
-
+ > git.exe checkout -f 556dcdf0e4a5e482e30c8fbe014d508d807c3cf8 # timeout=10
+Commit message: "jenkinsWindow"
+ > git.exe rev-list --no-walk 2e3e61b653433d32edca9fc190aa79f6168ecbad # timeout=10
 [Pipeline] }
 [Pipeline] // stage
 [Pipeline] withEnv
 [Pipeline] {
-
 [Pipeline] withEnv
 [Pipeline] {
 [Pipeline] stage
@@ -42,11 +37,9 @@ First time build. Skipping changelog.
 ðŸ“� Directorio de trabajo: ${WORKSPACE}
 [Pipeline] script
 [Pipeline] {
-
 [Pipeline] sh
 [Pipeline] }
 [Pipeline] // script
-
 [Pipeline] }
 [Pipeline] // stage
 [Pipeline] stage
@@ -54,7 +47,6 @@ First time build. Skipping changelog.
 Stage "Verificar Docker" skipped due to earlier failure(s)
 [Pipeline] getContext
 [Pipeline] }
-
 [Pipeline] // stage
 [Pipeline] stage
 [Pipeline] { (Verificar si es primera vez)
@@ -66,14 +58,12 @@ Stage "Verificar si es primera vez" skipped due to earlier failure(s)
 [Pipeline] { (Desplegar)
 Stage "Desplegar" skipped due to earlier failure(s)
 [Pipeline] getContext
-
 [Pipeline] }
 [Pipeline] // stage
 [Pipeline] stage
 [Pipeline] { (Verificar despliegue)
 Stage "Verificar despliegue" skipped due to earlier failure(s)
 [Pipeline] getContext
-
 [Pipeline] }
 [Pipeline] // stage
 [Pipeline] stage
@@ -81,7 +71,6 @@ Stage "Verificar despliegue" skipped due to earlier failure(s)
 Stage "Limpiar" skipped due to earlier failure(s)
 [Pipeline] getContext
 [Pipeline] }
-
 [Pipeline] // stage
 [Pipeline] stage
 [Pipeline] { (Declarative: Post Actions)
@@ -91,7 +80,6 @@ Pipeline finalizado
 â�Œ Error en el despliegue
 [Pipeline] }
 [Pipeline] // stage
-
 [Pipeline] }
 [Pipeline] // withEnv
 [Pipeline] }
@@ -135,7 +123,7 @@ java.io.IOException: CreateProcess error=2, El sistema no puede encontrar el arc
 	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.impl.Checker.checkedCall(Checker.java:152)
 	at PluginClassLoader for workflow-cps//com.cloudbees.groovy.cps.sandbox.SandboxInvoker.methodCall(SandboxInvoker.java:17)
 	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.LoggingInvoker.methodCall(LoggingInvoker.java:120)
-Also:   org.jenkinsci.plugins.workflow.actions.ErrorAction$ErrorId: 836fc549-6a0d-4202-beff-b1d01203ccf8
+Also:   org.jenkinsci.plugins.workflow.actions.ErrorAction$ErrorId: 210191a2-a872-4d10-946c-aff4c7f1dee4
 Caused: java.io.IOException: Cannot run program "sh" (in directory "C:\ProgramData\Jenkins\.jenkins\workspace\ENTREGA Y DESPLIEGUE\ClientManager"): CreateProcess error=2, El sistema no puede encontrar el archivo especificado
 	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1143)
 	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1073)
