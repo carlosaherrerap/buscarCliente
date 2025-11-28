@@ -1,6 +1,21 @@
 pipeline {
     agent any
     
+    triggers {
+        genericTrigger(
+            genericVariables: [
+                [key: 'ref', value: '$.ref'],
+                [key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/(.*)']
+            ],
+            causeString: 'Triggered by GitHub webhook',
+            token: 'pipelineScript',
+            printContributedVariables: true,
+            printPostContent: true,
+            regexpFilterText: '$ref',
+            regexpFilterExpression: 'refs/heads/master'
+        )
+    }
+    
     environment {
         PROJECT_DIR = "${WORKSPACE}"
         COMPOSE_FILE = "docker-compose.yml"
