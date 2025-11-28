@@ -56,12 +56,20 @@ pipeline {
                     echo '🔄 Desplegando aplicación...'
                     bat """
                         @echo off
+                        echo Cambiando al directorio del proyecto...
                         cd /d "${PROJECT_DIR}"
-                        echo Deteniendo contenedor existente si existe...
-                        docker stop ${CONTAINER_NAME} 2>nul
-                        echo Eliminando contenedor existente si existe...
-                        docker rm -f ${CONTAINER_NAME} 2>nul
-                        if errorlevel 1 echo Contenedor no existía o ya fue eliminado
+                        if errorlevel 1 (
+                            echo ERROR: No se pudo acceder al directorio ${PROJECT_DIR}
+                            exit /b 1
+                        )
+                        echo Directorio actual: %CD%
+                        echo Deteniendo y eliminando contenedores existentes...
+                        docker-compose down
+                        if errorlevel 1 (
+                            echo ADVERTENCIA: docker-compose down falló, intentando detener manualmente...
+                            docker stop ${CONTAINER_NAME} 2>nul
+                            docker rm -f ${CONTAINER_NAME} 2>nul
+                        )
                         echo Construyendo imagen Docker...
                         docker-compose build --no-cache
                         if errorlevel 1 (
