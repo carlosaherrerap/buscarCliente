@@ -13,14 +13,13 @@ pipeline {
                 echo '🚀 Iniciando pipeline CI/CD'
                 echo '📍 Directorio de trabajo: ${WORKSPACE}'
                 script {
-                    // Si ya tenemos el código del SCM, solo verificamos
-                    sh """
-                        pwd
-                        echo '--- Archivos en el workspace ---'
-                        ls -la
-                        echo '--- Verificando Jenkinsfile ---'
-                        test -f Jenkinsfile && echo 'Jenkinsfile encontrado' || echo 'Jenkinsfile NO encontrado'
-                    """
+                    bat """@echo off
+cd /d "${WORKSPACE}"
+echo --- Archivos en el workspace ---
+dir
+echo --- Verificando Jenkinsfile ---
+if exist Jenkinsfile (echo Jenkinsfile encontrado) else (echo Jenkinsfile NO encontrado)
+"""
                 }
             }
         }
@@ -29,23 +28,8 @@ pipeline {
             steps {
                 script {
                     echo 'Verificando que Docker esté disponible...'
-                    sh 'docker --version'
-                    sh 'docker-compose --version'
-                }
-            }
-        }
-        
-        stage('Verificar si es primera vez') {
-            steps {
-                script {
-                    echo 'Verificando si el contenedor existe...'
-                    def containerExists = sh(
-                        script: "docker ps -a --filter name=${CONTAINER_NAME} --format '{{.Names}}'",
-                        returnStdout: true
-                    ).trim()
-                    
-                    env.IS_FIRST_TIME = containerExists == '' ? 'true' : 'false'
-                    echo "¿Es primera vez? ${env.IS_FIRST_TIME}"
+                    bat 'docker --version'
+                    bat 'docker-compose --version'
                 }
             }
         }
@@ -54,12 +38,13 @@ pipeline {
             steps {
                 script {
                     echo '🔄 Desplegando aplicación...'
-                    sh """
-                        cd ${PROJECT_DIR}
-                        docker stop ${CONTAINER_NAME} || true
-                        docker-compose build --no-cache
-                        docker-compose up -d
-                    """
+                    bat """@echo off
+cd /d "${PROJECT_DIR}"
+docker stop ${CONTAINER_NAME} 2>nul
+if errorlevel 1 echo Contenedor no existe o ya estaba detenido
+docker-compose build --no-cache
+docker-compose up -d
+"""
                 }
             }
         }
@@ -69,14 +54,14 @@ pipeline {
                 script {
                     echo 'Verificando que el contenedor esté corriendo...'
                     sleep(time: 5, unit: 'SECONDS')
-                    sh """
-                        docker ps --filter name=${CONTAINER_NAME} --format '{{.Names}} - {{.Status}}'
-                    """
+                    bat """@echo off
+docker ps --filter name=${CONTAINER_NAME} --format "{{.Names}} - {{.Status}}"
+"""
                     
-                    // Verificar logs para asegurar que no hay errores críticos
-                    sh """
-                        docker logs --tail 50 ${CONTAINER_NAME} || true
-                    """
+                    bat """@echo off
+docker logs --tail 50 ${CONTAINER_NAME}
+if errorlevel 1 echo No se pudieron obtener los logs
+"""
                 }
             }
         }
@@ -85,7 +70,10 @@ pipeline {
             steps {
                 script {
                     echo 'Limpiando imágenes Docker huérfanas...'
-                    sh 'docker image prune -f || true'
+                    bat """@echo off
+docker image prune -f
+if errorlevel 1 echo No hay imágenes para limpiar
+"""
                 }
             }
         }
@@ -94,15 +82,12 @@ pipeline {
     post {
         success {
             echo '✅ Despliegue exitoso!'
-            // Opcional: Enviar notificación (email, Slack, etc.)
         }
         failure {
             echo '❌ Error en el despliegue'
-            // Opcional: Enviar notificación de error
         }
         always {
             echo 'Pipeline finalizado'
         }
     }
 }
-
