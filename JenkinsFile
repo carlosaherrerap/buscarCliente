@@ -10,6 +10,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                echo 'Iniciando pipeline de tipo scripted o declarativo?'
                 echo 'Obteniendo código del repositorio...'
                 checkout scm
             }
