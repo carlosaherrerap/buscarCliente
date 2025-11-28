@@ -2,22 +2,37 @@ pipeline {
     agent any
     
     environment {
-        PROJECT_DIR = "${WORKSPACE}"
+        PROJECT_DIR = "C:\\Users\\Administrador\\Documents\\personal\\Nueva carpeta\\buscarCliente"
         COMPOSE_FILE = "docker-compose.yml"
         CONTAINER_NAME = "callcenter-web"
+        GIT_REPO = "https://github.com/InformaPeru-com/loginInformaPeru.git"
     }
     
     stages {
         stage('Checkout') {
             steps {
                 echo '🚀 Iniciando pipeline CI/CD'
-                echo '📍 Directorio de trabajo: ${WORKSPACE}'
+                echo '📍 Directorio de proyecto: ${PROJECT_DIR}'
                 script {
                     bat """
                         @echo off
-                        cd /d "${WORKSPACE}"
-                        echo --- Archivos en el workspace ---
+                        echo Cambiando al directorio del proyecto...
+                        cd /d "${PROJECT_DIR}"
+                        if errorlevel 1 (
+                            echo ERROR: No se pudo acceder al directorio ${PROJECT_DIR}
+                            exit /b 1
+                        )
+                        echo --- Archivos en el directorio ---
                         dir
+                        echo --- Configurando git remoto y haciendo pull ---
+                        git remote remove origin 2>nul
+                        git remote add origin ${GIT_REPO} 2>nul
+                        git remote set-url origin ${GIT_REPO}
+                        echo Haciendo git pull desde ${GIT_REPO}...
+                        git pull origin master
+                        if errorlevel 1 (
+                            echo ADVERTENCIA: El git pull falló, continuando de todas formas...
+                        )
                         echo --- Verificando Jenkinsfile ---
                         if exist Jenkinsfile (echo Jenkinsfile encontrado) else (echo Jenkinsfile NO encontrado)
                     """
@@ -42,10 +57,23 @@ pipeline {
                     bat """
                         @echo off
                         cd /d "${PROJECT_DIR}"
+                        echo Deteniendo contenedor existente si existe...
                         docker stop ${CONTAINER_NAME} 2>nul
-                        if errorlevel 1 echo Contenedor no existe o ya estaba detenido
+                        echo Eliminando contenedor existente si existe...
+                        docker rm -f ${CONTAINER_NAME} 2>nul
+                        if errorlevel 1 echo Contenedor no existía o ya fue eliminado
+                        echo Construyendo imagen Docker...
                         docker-compose build --no-cache
+                        if errorlevel 1 (
+                            echo ERROR: Falló la construcción de la imagen
+                            exit /b 1
+                        )
+                        echo Levantando contenedor...
                         docker-compose up -d
+                        if errorlevel 1 (
+                            echo ERROR: Falló al levantar el contenedor
+                            exit /b 1
+                        )
                     """
                 }
             }

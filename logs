@@ -18,11 +18,11 @@ Fetching upstream changes from https://github.com/carlosaherrerap/buscarCliente.
  > git --version # 'git version 2.49.0.windows.1'
  > git.exe fetch --tags --force --progress -- https://github.com/carlosaherrerap/buscarCliente.git +refs/heads/*:refs/remotes/origin/* # timeout=10
  > git.exe rev-parse "refs/remotes/origin/master^{commit}" # timeout=10
-Checking out Revision 556dcdf0e4a5e482e30c8fbe014d508d807c3cf8 (refs/remotes/origin/master)
+Checking out Revision b3f4e094c8ba6b33431145981d19eaca80b6d04a (refs/remotes/origin/master)
  > git.exe config core.sparsecheckout # timeout=10
- > git.exe checkout -f 556dcdf0e4a5e482e30c8fbe014d508d807c3cf8 # timeout=10
-Commit message: "jenkinsWindow"
- > git.exe rev-list --no-walk 2e3e61b653433d32edca9fc190aa79f6168ecbad # timeout=10
+ > git.exe checkout -f b3f4e094c8ba6b33431145981d19eaca80b6d04a # timeout=10
+Commit message: "updateJenkins"
+ > git.exe rev-list --no-walk ed0ded3fc8452defabd252166e1e4c3915244138 # timeout=10
 [Pipeline] }
 [Pipeline] // stage
 [Pipeline] withEnv
@@ -37,35 +37,231 @@ Commit message: "jenkinsWindow"
 ðŸ“� Directorio de trabajo: ${WORKSPACE}
 [Pipeline] script
 [Pipeline] {
-[Pipeline] sh
+[Pipeline] bat
+--- Archivos en el workspace ---
+ El volumen de la unidad C no tiene etiqueta.
+ El n£mero de serie del volumen es: A8E5-19E7
+
+ Directorio de C:\ProgramData\Jenkins\.jenkins\workspace\ENTREGA Y DESPLIEGUE\ClientManager
+
+28/11/2025  17:08    <DIR>          .
+28/11/2025  16:59    <DIR>          ..
+28/11/2025  16:59                82 .dockerignore
+28/11/2025  16:59               204 .env
+28/11/2025  16:59               371 .gitignore
+28/11/2025  16:59    <DIR>          backend
+28/11/2025  16:59    <DIR>          base
+28/11/2025  16:59               930 docker-compose.yml
+28/11/2025  16:59               538 Dockerfile
+28/11/2025  16:59               191 env.example
+28/11/2025  16:59    <DIR>          frontend
+28/11/2025  17:08             3,326 Jenkinsfile
+28/11/2025  17:08            13,443 logs
+28/11/2025  16:59             5,925 README.md
+28/11/2025  16:59    <DIR>          scripts
+28/11/2025  16:59    <DIR>          uploads
+               9 archivos         25,010 bytes
+               7 dirs  606,674,354,176 bytes libres
+--- Verificando Jenkinsfile ---
+Jenkinsfile encontrado
 [Pipeline] }
 [Pipeline] // script
 [Pipeline] }
 [Pipeline] // stage
 [Pipeline] stage
 [Pipeline] { (Verificar Docker)
-Stage "Verificar Docker" skipped due to earlier failure(s)
-[Pipeline] getContext
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+Verificando que Docker estÃ© disponible...
+[Pipeline] bat
+
+C:\ProgramData\Jenkins\.jenkins\workspace\ENTREGA Y DESPLIEGUE\ClientManager>docker --version 
+Docker version 28.0.1, build 068a01e
+[Pipeline] bat
+
+C:\ProgramData\Jenkins\.jenkins\workspace\ENTREGA Y DESPLIEGUE\ClientManager>docker-compose --version 
+Docker Compose version v2.33.1-desktop.1
 [Pipeline] }
-[Pipeline] // stage
-[Pipeline] stage
-[Pipeline] { (Verificar si es primera vez)
-Stage "Verificar si es primera vez" skipped due to earlier failure(s)
-[Pipeline] getContext
+[Pipeline] // script
 [Pipeline] }
 [Pipeline] // stage
 [Pipeline] stage
 [Pipeline] { (Desplegar)
-Stage "Desplegar" skipped due to earlier failure(s)
-[Pipeline] getContext
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+ðŸ”„ Desplegando aplicaciÃ³n...
+[Pipeline] bat
+callcenter-web
+Compose now can delegate build to bake for better performances
+Just set COMPOSE_BAKE=true
+#0 building with "default" instance using docker driver
+
+#1 [callcenter-app internal] load build definition from Dockerfile
+#1 transferring dockerfile: 577B 0.0s done
+#1 DONE 0.3s
+
+#2 [callcenter-app internal] load metadata for docker.io/library/node:18-alpine
+#2 DONE 0.9s
+
+#3 [callcenter-app internal] load .dockerignore
+#3 transferring context: 122B done
+#3 DONE 0.3s
+
+#4 [callcenter-app internal] load build context
+#4 DONE 0.0s
+
+#5 [callcenter-app 1/7] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
+#5 resolve docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
+#5 resolve docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e 0.4s done
+#5 DONE 0.6s
+
+#6 [callcenter-app 2/7] WORKDIR /app
+#6 CACHED
+
+#4 [callcenter-app internal] load build context
+#4 transferring context: 1.42kB done
+#4 DONE 0.3s
+
+#7 [callcenter-app 3/7] COPY backend/package.json backend/package-lock.json* ./
+#7 DONE 1.6s
+
+#8 [callcenter-app 4/7] RUN npm install --production
+
+#8 2.891 npm warn config production Use `--omit=dev` instead.
+#8 3.849 npm warn EBADENGINE Unsupported engine {
+#8 3.849 npm warn EBADENGINE   package: '@azure-rest/core-client@2.5.1',
+#8 3.849 npm warn EBADENGINE   required: { node: '>=20.0.0' },
+#8 3.849 npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+#8 3.849 npm warn EBADENGINE }
+
+#8 3.850 npm warn EBADENGINE Unsupported engine {
+#8 3.850 npm warn EBADENGINE   package: '@azure/core-auth@1.10.1',
+#8 3.850 npm warn EBADENGINE   required: { node: '>=20.0.0' },
+#8 3.850 npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+#8 3.850 npm warn EBADENGINE }
+#8 3.852 npm warn EBADENGINE Unsupported engine {
+#8 3.852 npm warn EBADENGINE   package: '@azure/core-client@1.10.1',
+#8 3.852 npm warn EBADENGINE   required: { node: '>=20.0.0' },
+#8 3.852 npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+#8 3.852 npm warn EBADENGINE }
+#8 3.853 npm warn EBADENGINE Unsupported engine {
+#8 3.853 npm warn EBADENGINE   package: '@azure/core-http-compat@2.3.1',
+#8 3.853 npm warn EBADENGINE   required: { node: '>=20.0.0' },
+#8 3.853 npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+#8 3.853 npm warn EBADENGINE }
+#8 3.854 npm warn EBADENGINE Unsupported engine {
+#8 3.854 npm warn EBADENGINE   package: '@azure/core-rest-pipeline@1.22.2',
+#8 3.854 npm warn EBADENGINE   required: { node: '>=20.0.0' },
+#8 3.854 npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+#8 3.854 npm warn EBADENGINE }
+#8 3.855 npm warn EBADENGINE Unsupported engine {
+#8 3.855 npm warn EBADENGINE   package: '@azure/core-tracing@1.3.1',
+#8 3.855 npm warn EBADENGINE   required: { node: '>=20.0.0' },
+#8 3.855 npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+#8 3.855 npm warn EBADENGINE }
+#8 3.855 npm warn EBADENGINE Unsupported engine {
+#8 3.855 npm warn EBADENGINE   package: '@azure/core-util@1.13.1',
+#8 3.855 npm warn EBADENGINE   required: { node: '>=20.0.0' },
+#8 3.855 npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+#8 3.855 npm warn EBADENGINE }
+#8 3.857 npm warn EBADENGINE Unsupported engine {
+#8 3.857 npm warn EBADENGINE   package: '@azure/logger@1.3.0',
+#8 3.857 npm warn EBADENGINE   required: { node: '>=20.0.0' },
+#8 3.857 npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+#8 3.857 npm warn EBADENGINE }
+#8 3.858 npm warn EBADENGINE Unsupported engine {
+#8 3.858 npm warn EBADENGINE   package: '@typespec/ts-http-runtime@0.3.2',
+#8 3.858 npm warn EBADENGINE   required: { node: '>=20.0.0' },
+#8 3.858 npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+#8 3.858 npm warn EBADENGINE }
+
+#8 7.450 npm warn deprecated rimraf@2.7.1: Rimraf versions prior to v4 are no longer supported
+#8 7.784 npm warn deprecated multer@1.4.5-lts.2: Multer 1.x is impacted by a number of vulnerabilities, which have been patched in 2.x. You should upgrade to the latest 2.x version.
+#8 7.785 npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+
+#8 8.005 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+#8 8.016 npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+
+#8 9.001 npm warn deprecated fstream@1.0.12: This package is no longer supported.
+
+#8 13.04 
+#8 13.04 added 340 packages, and audited 341 packages in 10s
+#8 13.04 
+#8 13.04 83 packages are looking for funding
+#8 13.04   run `npm fund` for details
+#8 13.07 
+#8 13.07 4 vulnerabilities (3 moderate, 1 high)
+#8 13.07 
+#8 13.07 To address all issues possible (including breaking changes), run:
+#8 13.07   npm audit fix --force
+#8 13.07 
+#8 13.07 Some issues need review, and may require choosing
+#8 13.07 a different dependency.
+#8 13.07 
+#8 13.07 Run `npm audit` for details.
+#8 13.07 npm notice
+#8 13.07 npm notice New major version of npm available! 10.8.2 -> 11.6.4
+#8 13.07 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.4
+#8 13.07 npm notice To update run: npm install -g npm@11.6.4
+#8 13.07 npm notice
+
+#8 DONE 30.3s
+
+#9 [callcenter-app 5/7] COPY backend/ ./
+
+#9 DONE 1.9s
+
+#10 [callcenter-app 6/7] COPY frontend/ ./frontend/
+
+#10 DONE 1.4s
+
+#11 [callcenter-app 7/7] RUN mkdir -p uploads/temp
+
+#11 DONE 3.1s
+
+#12 [callcenter-app] exporting to image
+#12 exporting layers
+
+#12 exporting layers 12.9s done
+#12 exporting manifest sha256:dbc970898b537a36402bf9fd716174ee15d190cae97520afe78abf3e76590486
+#12 exporting manifest sha256:dbc970898b537a36402bf9fd716174ee15d190cae97520afe78abf3e76590486 0.5s done
+#12 exporting config sha256:6a4f5f59e6fe4f38e5b754fe15958f9c93d0309a0c7930a237e982ffeae337f8
+#12 exporting config sha256:6a4f5f59e6fe4f38e5b754fe15958f9c93d0309a0c7930a237e982ffeae337f8 0.3s done
+#12 exporting attestation manifest sha256:8cc4d937c068fa914992c0e4416e6b15c3ea41ba4a687960f3420d42ee8daac7
+#12 exporting attestation manifest sha256:8cc4d937c068fa914992c0e4416e6b15c3ea41ba4a687960f3420d42ee8daac7 0.7s done
+
+#12 exporting manifest list sha256:a4166602235d13a9f464968447023c9c7a24aee30e4a80c3ac5ccc7fbdc39119
+#12 exporting manifest list sha256:a4166602235d13a9f464968447023c9c7a24aee30e4a80c3ac5ccc7fbdc39119 0.5s done
+#12 naming to docker.io/library/clientmanager-callcenter-app:latest
+#12 naming to docker.io/library/clientmanager-callcenter-app:latest 0.1s done
+#12 unpacking to docker.io/library/clientmanager-callcenter-app:latest
+
+#12 unpacking to docker.io/library/clientmanager-callcenter-app:latest 6.6s done
+#12 DONE 22.0s
+
+
+#13 [callcenter-app] resolving provenance for metadata file
+#13 DONE 0.0s
+ callcenter-app  Built
+
+ Container callcenter-web  Creating
+Error response from daemon: Conflict. The container name "/callcenter-web" is already in use by container "c543b735052260c1cb43b3c60d3ea20c8bf30e726a68697df8c082b62479f1b5". You have to remove (or rename) that container to be able to reuse that name.
+
+[Pipeline] }
+[Pipeline] // script
+
 [Pipeline] }
 [Pipeline] // stage
 [Pipeline] stage
 [Pipeline] { (Verificar despliegue)
+
 Stage "Verificar despliegue" skipped due to earlier failure(s)
 [Pipeline] getContext
 [Pipeline] }
 [Pipeline] // stage
+
 [Pipeline] stage
 [Pipeline] { (Limpiar)
 Stage "Limpiar" skipped due to earlier failure(s)
@@ -78,6 +274,7 @@ Stage "Limpiar" skipped due to earlier failure(s)
 Pipeline finalizado
 [Pipeline] echo
 â�Œ Error en el despliegue
+
 [Pipeline] }
 [Pipeline] // stage
 [Pipeline] }
@@ -85,110 +282,8 @@ Pipeline finalizado
 [Pipeline] }
 [Pipeline] // withEnv
 [Pipeline] }
+
 [Pipeline] // node
 [Pipeline] End of Pipeline
-java.io.IOException: CreateProcess error=2, El sistema no puede encontrar el archivo especificado
-	at java.base/java.lang.ProcessImpl.create(Native Method)
-	at java.base/java.lang.ProcessImpl.<init>(ProcessImpl.java:499)
-	at java.base/java.lang.ProcessImpl.start(ProcessImpl.java:158)
-	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1110)
-	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1073)
-	at hudson.Proc$LocalProc.<init>(Proc.java:252)
-	at hudson.Proc$LocalProc.<init>(Proc.java:221)
-	at hudson.Launcher$LocalLauncher.launch(Launcher.java:995)
-	at hudson.Launcher$ProcStarter.start(Launcher.java:507)
-	at PluginClassLoader for durable-task//org.jenkinsci.plugins.durabletask.BourneShellScript.launchWithCookie(BourneShellScript.java:179)
-	at PluginClassLoader for durable-task//org.jenkinsci.plugins.durabletask.FileMonitoringTask.launch(FileMonitoringTask.java:132)
-	at PluginClassLoader for workflow-durable-task-step//org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep$Execution.start(DurableTaskStep.java:330)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.DSL.invokeStep(DSL.java:333)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.DSL.invokeMethod(DSL.java:194)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.CpsScript.invokeMethod(CpsScript.java:124)
-	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
-	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
-	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:98)
-	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:325)
-	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1225)
-	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1034)
-	at org.codehaus.groovy.runtime.callsite.PogoMetaClassSite.call(PogoMetaClassSite.java:41)
-	at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:47)
-	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:116)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.impl.Checker$1.call(Checker.java:180)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.GroovyInterceptor.onMethodCall(GroovyInterceptor.java:23)
-	at PluginClassLoader for script-security//org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SandboxInterceptor.onMethodCall(SandboxInterceptor.java:163)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.impl.Checker$1.call(Checker.java:178)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.impl.Checker.checkedCall(Checker.java:182)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.impl.Checker.checkedCall(Checker.java:152)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.impl.Checker.checkedCall(Checker.java:152)
-	at PluginClassLoader for workflow-cps//com.cloudbees.groovy.cps.sandbox.SandboxInvoker.methodCall(SandboxInvoker.java:17)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.LoggingInvoker.methodCall(LoggingInvoker.java:120)
-Also:   org.jenkinsci.plugins.workflow.actions.ErrorAction$ErrorId: 210191a2-a872-4d10-946c-aff4c7f1dee4
-Caused: java.io.IOException: Cannot run program "sh" (in directory "C:\ProgramData\Jenkins\.jenkins\workspace\ENTREGA Y DESPLIEGUE\ClientManager"): CreateProcess error=2, El sistema no puede encontrar el archivo especificado
-	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1143)
-	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1073)
-	at hudson.Proc$LocalProc.<init>(Proc.java:252)
-	at hudson.Proc$LocalProc.<init>(Proc.java:221)
-	at hudson.Launcher$LocalLauncher.launch(Launcher.java:995)
-	at hudson.Launcher$ProcStarter.start(Launcher.java:507)
-	at PluginClassLoader for durable-task//org.jenkinsci.plugins.durabletask.BourneShellScript.launchWithCookie(BourneShellScript.java:179)
-	at PluginClassLoader for durable-task//org.jenkinsci.plugins.durabletask.FileMonitoringTask.launch(FileMonitoringTask.java:132)
-	at PluginClassLoader for workflow-durable-task-step//org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep$Execution.start(DurableTaskStep.java:330)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.DSL.invokeStep(DSL.java:333)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.DSL.invokeMethod(DSL.java:194)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.CpsScript.invokeMethod(CpsScript.java:124)
-	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
-	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
-	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:98)
-	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:325)
-	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1225)
-	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1034)
-	at org.codehaus.groovy.runtime.callsite.PogoMetaClassSite.call(PogoMetaClassSite.java:41)
-	at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:47)
-	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:116)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.impl.Checker$1.call(Checker.java:180)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.GroovyInterceptor.onMethodCall(GroovyInterceptor.java:23)
-	at PluginClassLoader for script-security//org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SandboxInterceptor.onMethodCall(SandboxInterceptor.java:163)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.impl.Checker$1.call(Checker.java:178)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.impl.Checker.checkedCall(Checker.java:182)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.impl.Checker.checkedCall(Checker.java:152)
-	at PluginClassLoader for script-security//org.kohsuke.groovy.sandbox.impl.Checker.checkedCall(Checker.java:152)
-	at PluginClassLoader for workflow-cps//com.cloudbees.groovy.cps.sandbox.SandboxInvoker.methodCall(SandboxInvoker.java:17)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.LoggingInvoker.methodCall(LoggingInvoker.java:120)
-	at WorkflowScript.run(WorkflowScript:17)
-	at ___cps.transform___(Native Method)
-	at PluginClassLoader for workflow-cps//com.cloudbees.groovy.cps.impl.ContinuationGroup.methodCall(ContinuationGroup.java:107)
-	at PluginClassLoader for workflow-cps//com.cloudbees.groovy.cps.impl.FunctionCallBlock$ContinuationImpl.dispatchOrArg(FunctionCallBlock.java:118)
-	at PluginClassLoader for workflow-cps//com.cloudbees.groovy.cps.impl.FunctionCallBlock$ContinuationImpl.fixArg(FunctionCallBlock.java:87)
-	at jdk.internal.reflect.GeneratedMethodAccessor660.invoke(Unknown Source)
-	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
-	at PluginClassLoader for workflow-cps//com.cloudbees.groovy.cps.impl.ContinuationPtr$ContinuationImpl.receive(ContinuationPtr.java:71)
-	at PluginClassLoader for workflow-cps//com.cloudbees.groovy.cps.impl.ConstantBlock.eval(ConstantBlock.java:21)
-	at PluginClassLoader for workflow-cps//com.cloudbees.groovy.cps.Next.step(Next.java:84)
-	at PluginClassLoader for workflow-cps//com.cloudbees.groovy.cps.Continuable.run0(Continuable.java:142)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.SandboxContinuable.access$001(SandboxContinuable.java:17)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.SandboxContinuable.run0(SandboxContinuable.java:48)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.CpsThread.runNextChunk(CpsThread.java:188)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.CpsThreadGroup.run(CpsThreadGroup.java:464)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.CpsThreadGroup$2.call(CpsThreadGroup.java:372)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.CpsThreadGroup$2.call(CpsThreadGroup.java:302)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.CpsVmExecutorService.lambda$wrap$4(CpsVmExecutorService.java:143)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	at hudson.remoting.SingleLaneExecutorService$1.run(SingleLaneExecutorService.java:139)
-	at jenkins.util.ContextResettingExecutorService$1.run(ContextResettingExecutorService.java:28)
-	at jenkins.security.ImpersonatingExecutorService$1.run(ImpersonatingExecutorService.java:68)
-	at jenkins.util.ErrorLoggingExecutorService.lambda$wrap$0(ErrorLoggingExecutorService.java:51)
-	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
-	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.CpsVmExecutorService$1.call(CpsVmExecutorService.java:53)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.CpsVmExecutorService$1.call(CpsVmExecutorService.java:50)
-	at org.codehaus.groovy.runtime.GroovyCategorySupport$ThreadCategoryInfo.use(GroovyCategorySupport.java:136)
-	at org.codehaus.groovy.runtime.GroovyCategorySupport.use(GroovyCategorySupport.java:275)
-	at PluginClassLoader for workflow-cps//org.jenkinsci.plugins.workflow.cps.CpsVmExecutorService.lambda$categoryThreadFactory$0(CpsVmExecutorService.java:50)
-	at java.base/java.lang.Thread.run(Thread.java:842)
+ERROR: script returned exit code 1
 Finished: FAILURE
