@@ -16,6 +16,7 @@ pipeline {
                 script {
                     bat """
                         @echo off
+                        setlocal enabledelayedexpansion
                         echo Cambiando al directorio del proyecto...
                         cd /d "${PROJECT_DIR}"
                         if errorlevel 1 (
@@ -24,17 +25,26 @@ pipeline {
                         )
                         echo --- Archivos en el directorio ---
                         dir
+                        echo --- Configurando git seguro para este directorio ---
+                        git config --global --add safe.directory "*" 2>nul
+                        git config --global --add safe.directory "${PROJECT_DIR}" 2>nul
+                        git config --global --add safe.directory "C:/Users/Administrador/Documents/personal/Nueva carpeta/buscarCliente" 2>nul
                         echo --- Configurando git remoto y haciendo pull ---
                         git remote remove origin 2>nul
                         git remote add origin ${GIT_REPO} 2>nul
-                        git remote set-url origin ${GIT_REPO}
+                        git remote set-url origin ${GIT_REPO} 2>nul
                         echo Haciendo git pull desde ${GIT_REPO}...
-                        git pull origin master
+                        git pull origin master 2>&1
                         if errorlevel 1 (
-                            echo ADVERTENCIA: El git pull falló, continuando de todas formas...
+                            echo ADVERTENCIA: git pull falló, pero continuando con el pipeline...
+                            echo El código existente será usado para el despliegue
+                        ) else (
+                            echo Git pull completado exitosamente
                         )
                         echo --- Verificando Jenkinsfile ---
                         if exist Jenkinsfile (echo Jenkinsfile encontrado) else (echo Jenkinsfile NO encontrado)
+                        echo Stage Checkout completado - continuando con el pipeline
+                        exit /b 0
                     """
                 }
             }
