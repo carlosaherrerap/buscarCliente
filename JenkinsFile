@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo 'Iniciando pipeline'
+                echo 'Iniciando pipeline ci/cd. Que emocion!!'
                 echo 'Obteniendo código del repositorio...'
                 checkout scm
             }
