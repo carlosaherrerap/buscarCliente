@@ -1,5 +1,5 @@
 # Sistema de Call Center - Gestión de Clientes y Asesores
-
+#xd
 Sistema web profesional para la gestión de clientes, asesores y asignaciones de pagos en un call center.
 
 ## Características
