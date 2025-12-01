@@ -1,5 +1,6 @@
 const API_URL = window.location.origin + '/api';
 
+console.log("CONEXION DE DESPLIEGUE EXITOSA A:", API_URL);
 // Funciones de formateo
 function formatearFecha(fecha) {
     if (!fecha) return '';
