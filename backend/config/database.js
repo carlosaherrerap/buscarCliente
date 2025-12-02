@@ -89,17 +89,52 @@ if (isDocker) {
 }
 
 // Configuración de conexión a SQL Server
+// Soporte para distintos formatos de DB_SERVER:
+//  - HOST\\INSTANCE  -> server: HOST, options.instanceName: INSTANCE
+//  - HOST,PORT        -> server: HOST, options.port: PORT
+//  - HOST             -> server: HOST
+
+const rawServer = process.env.DB_SERVER || 'localhost';
+let parsedServer = processServerName(rawServer);
+let parsedInstance = process.env.DB_INSTANCE || undefined;
+let parsedPort = undefined;
+
+// If the server string contains a backslash (named instance), split it
+if (rawServer && rawServer.includes('\\')) {
+  const parts = rawServer.split('\\');
+  if (parts.length >= 2) {
+    // Host might include a port too: HOST,PORT\INSTANCE is unlikely but handle defensively
+    const hostPart = parts[0];
+    const instancePart = parts.slice(1).join('\\');
+    // If hostPart has a comma, treat second part as port
+    if (hostPart.includes(',')) {
+      const [h, p] = hostPart.split(',');
+      parsedServer = processServerName(h);
+      parsedPort = parseInt(p, 10) || undefined;
+    } else {
+      parsedServer = processServerName(hostPart);
+    }
+    parsedInstance = parsedInstance || instancePart;
+  }
+} else if (rawServer && rawServer.includes(',')) {
+  // Server specified as HOST,PORT
+  const [h, p] = rawServer.split(',');
+  parsedServer = processServerName(h);
+  parsedPort = parseInt(p, 10) || undefined;
+}
+
 const config = {
   user: process.env.DB_USER || 'sa',
   password: process.env.DB_PASSWORD || '',
-  server: processServerName(process.env.DB_SERVER) || 'localhost',
+  server: parsedServer || 'localhost',
   database: process.env.DB_NAME || 'CallCenterDB',
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true' || true,
     trustServerCertificate: process.env.DB_TRUST_CERT === 'true' || true,
     enableArithAbort: true,
     // Configuraciones adicionales para mejorar la conexión
-    instanceName: process.env.DB_INSTANCE || undefined,
+    instanceName: parsedInstance || undefined,
+    port: parsedPort || undefined,
     requestTimeout: 30000,
     connectionTimeout: 30000
   },
@@ -134,6 +169,8 @@ console.log('Configuración final que se usará:');
 console.log('  Entorno Docker detectado:', isDocker ? 'SÍ' : 'NO');
 console.log('  Server original:', process.env.DB_SERVER || 'NO DEFINIDA');
 console.log('  Server procesado:', config.server);
+console.log('  Instance (options.instanceName):', config.options.instanceName || 'NO DEFINIDA');
+console.log('  Port (options.port):', config.options.port || 'NO DEFINIDA');
 console.log('  Database:', config.database);
 console.log('  User:', config.user);
 console.log('  Password:', config.password ? '***' + config.password.slice(-2) + ' (length: ' + config.password.length + ')' : 'NO DEFINIDA');

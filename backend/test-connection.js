@@ -4,15 +4,39 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const sql = require('mssql');
 
+// Build config with support for HOST\\INSTANCE and HOST,PORT formats
+const rawServer = process.env.DB_SERVER || 'localhost';
+let server = rawServer;
+let instance = process.env.DB_INSTANCE || undefined;
+let port = undefined;
+
+if (rawServer.includes('\\')) {
+  const parts = rawServer.split('\\');
+  server = parts[0];
+  instance = instance || parts.slice(1).join('\\');
+  // If the host part contains a comma, use the part after comma as port
+  if (server.includes(',')) {
+    const [h, p] = server.split(',');
+    server = h;
+    port = parseInt(p, 10) || undefined;
+  }
+} else if (rawServer.includes(',')) {
+  const [h, p] = rawServer.split(',');
+  server = h;
+  port = parseInt(p, 10) || undefined;
+}
+
 const config = {
   user: process.env.DB_USER || 'sa',
   password: process.env.DB_PASSWORD || '',
-  server: process.env.DB_SERVER || 'localhost',
+  server,
   database: process.env.DB_NAME || 'CallCenterDB',
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true' || true,
     trustServerCertificate: process.env.DB_TRUST_CERT === 'true' || true,
     enableArithAbort: true,
+    instanceName: instance || undefined,
+    port: port || undefined,
     requestTimeout: 30000,
     connectionTimeout: 30000
   }
@@ -24,6 +48,8 @@ console.log('='.repeat(50));
 console.log('');
 console.log('Configuración detectada:');
 console.log('  Server:', config.server);
+console.log('  Instance (options.instanceName):', config.options.instanceName || 'NO DEFINIDA');
+console.log('  Port (options.port):', config.options.port || 'NO DEFINIDA');
 console.log('  Database:', config.database);
 console.log('  User:', config.user);
 console.log('  Password:', config.password ? '***' + config.password.slice(-2) : 'NO DEFINIDA');

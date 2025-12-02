@@ -67,6 +67,11 @@ DB_NAME=CallCenterDB
 DB_ENCRYPT=true
 DB_TRUST_CERT=true
 PORT=5000
+
+# Si tu SQL Server es una instancia con nombre (ej: HOST\INSTANCE) o usa un puerto
+# - Puedes usar: DB_SERVER=HOST\\INSTANCE
+# - O separar valores: DB_SERVER=HOST y DB_INSTANCE=INSTANCE
+# - También puedes especificar puerto: DB_SERVER=HOST,1433 o DB_PORT=1433
 ```
 
 ### 3. Crear las tablas en SQL Server
@@ -210,6 +215,23 @@ El archivo Excel debe contener:
 - Verificar que SQL Server esté accesible desde el contenedor
 - Revisar credenciales en `.env`
 - Asegurar que `DB_TRUST_CERT=true` si usas certificados autofirmados
+ - Si usas una instancia con nombre (ej: WINBOX\SQLINSTANCE) y obtienes ETIMEOUT,
+     intenta una de estas opciones:
+     1. Separar la instancia: DB_SERVER=WINBOX y DB_INSTANCE=SQLINSTANCE
+     2. Usar puerto fijo: configura la instancia para escuchar en un puerto estático (ej 1433) y usa DB_SERVER=WINBOX,1433
+     3. Asegúrate de que el servicio SQL Browser esté corriendo (resuelve instancias a puertos dinámicos) y permite UDP 1434 si usas instancias nombradas
+     4. Habilitar TCP/IP en SQL Server Configuration Manager y abrir el puerto correspondiente en el firewall
+     5. Desde tu máquina o contenedor, probar la conexión con PowerShell / sqlcmd:
+
+```powershell
+# Probar conexión de red (puerto 1433 como ejemplo)
+Test-NetConnection -ComputerName WINBOX -Port 1433
+
+# Probar con sqlcmd (reemplaza credenciales)
+sqlcmd -S "WINBOX\\SQLINSTANCE" -U sa -P "tu_password"
+```
+
+Si sigue fallando con ETIMEOUT, revisa que el nombre de host sea resolvible desde el entorno (docker: host.docker.internal) y que el puerto/instancia sea accesible.
 
 ### Error al importar Excel
 - Verificar que el archivo tenga las columnas requeridas
