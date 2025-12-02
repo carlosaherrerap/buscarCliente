@@ -10,6 +10,11 @@ let server = rawServer;
 let instance = process.env.DB_INSTANCE || undefined;
 let port = undefined;
 
+// allow explicit DB_PORT env var to override
+if (process.env.DB_PORT) {
+  port = parseInt(process.env.DB_PORT, 10) || undefined;
+}
+
 if (rawServer.includes('\\')) {
   const parts = rawServer.split('\\');
   server = parts[0];
