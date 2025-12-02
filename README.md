@@ -230,6 +230,10 @@ Test-NetConnection -ComputerName WINBOX -Port 1433
 # Probar con sqlcmd (reemplaza credenciales)
 sqlcmd -S "WINBOX\\SQLINSTANCE" -U sa -P "tu_password"
 ```
+--Test-Connection
+
+--TestConnection
+--testconnection
 
 Si sigue fallando con ETIMEOUT, revisa que el nombre de host sea resolvible desde el entorno (docker: host.docker.internal) y que el puerto/instancia sea accesible.
 
