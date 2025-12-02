@@ -13,6 +13,8 @@ let port = undefined;
 // allow explicit DB_PORT env var to override
 if (process.env.DB_PORT) {
   port = parseInt(process.env.DB_PORT, 10) || undefined;
+  // if port explicitly set, avoid using instanceName (force TCP):
+  if (port) instance = undefined;
 }
 
 if (rawServer.includes('\\')) {

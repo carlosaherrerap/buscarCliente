@@ -102,6 +102,8 @@ let parsedPort = undefined;
 // If DB_PORT is explicitly set in environment, prefer it
 if (process.env.DB_PORT) {
   parsedPort = parseInt(process.env.DB_PORT, 10) || undefined;
+  // If port is explicitly provided prefer it over instance name
+  if (parsedPort) parsedInstance = undefined;
 }
 
 // If the server string contains a backslash (named instance), split it
